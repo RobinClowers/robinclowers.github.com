@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Linq To SQL Caching - Robin's development blog</title>
+  <meta name="author" content="Robin Clowers">
+
+  
+  <meta name="description" content="I ran into a weird behavior while trying out different usage patterns of Linq To SQL. I noticed that some queries were not hitting the database! Now &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://RobinClowers.github.com/blog/2008/06/25/linq-to-sql-caching">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/robinclowers/atom.xml" rel="alternate" title="Robin's development blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Robin's development blog</a></h1>
+  
+    <h2>My thoughts on software development</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/robinclowers/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:RobinClowers.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Linq to SQL Caching</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-06-25T20:55:00-07:00" pubdate data-updated="true">Jun 25<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><div class='post'>
+<p>I ran into a weird behavior while trying out different usage patterns of Linq To SQL.  I noticed that some queries were not hitting the database!  Now I knew that Linq To SQL object tracking keeps cached copies of entities it retrieves, but my understanding was that it only used this for identity mapping and would never return stale results.  After some Googling and then looking at the internals of the System.Data.Linq.Table class with Reflector, I came to the conclusion that it was indeed returning its cached results.    This makes sense once you understand the way the data context works; I didn&#8217;t realize the implications of object tracking.  Once an object has been retrieved once by a data context, its values will not be updated by the database.  This is key for the way optimistic concurrency support works in Linq to SQL, but if you are used to writing simple crud applications where you ignore concurrency it would be easy to overlook this.  </p>  <p>On thing still puzzles me though, if I change my call from</p>  <pre class="code">context.Products;</pre><p> to </p><pre class="code">context.Products.ToList();</pre><p>I would always hit the database.  It turns out that ToList calls GetEnumerator (which leads to a query being fired) whereas when I databind directly against the Table, it calls IListSource.GetList, which will return the cached table if it can.  Why wouldn&#8217;t you query the database to check for new objects that might have been added to your results, and why couldn&#8217;t the same query use the cache when I call ToList on it?</p></div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Thanks for the comment Will!  I agree that using ToList is the most intuitive way to solve this, but it definitely acheives the desired effect.  Bindable LINQ looks really interesting, I have not tried using LINQ in a connected scenario, so I was unaware of those issues.</div>
+</div>
+<div class='comment'>
+<div class='author'>Will Hughes</div>
+<div class='content'>
+I&#8217;ve had a bunch of weirdness with LINQ caching - although most of mine have been around stored procs. <BR/><BR/>The .ToList() method, whilst crude, seems to be a good way to bypass a raft of issues. <BR/><BR/>The main drawback I found is that  unless you&#8217;re using something like <A HREF="http://www.codeplex.com/bindablelinq" REL="nofollow">Bindable LINQ</A> you&#8217;ve just broken any eventing notifications right there should you subsequently update rows.  <BR/><BR/>Obviously it&#8217;s not that important for ASP.NET and other backend services, but is more important for WinForms/Silverlight/WPF.</div>
+</div>
+</div>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robin Clowers</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-06-25T20:55:00-07:00" pubdate data-updated="true">Jun 25<span>th</span>, 2008</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/databinding/'>Databinding</a>, <a class='category' href='/blog/categories/linq/'>Linq</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://RobinClowers.github.com/blog/2008/06/25/linq-to-sql-caching/" data-via="" data-counturl="http://RobinClowers.github.com/blog/2008/06/25/linq-to-sql-caching/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2008/06/18/deferred-execution-in-linq-to-sql/" title="Previous Post: Deferred Execution in Linq to SQL">&laquo; Deferred Execution in Linq to SQL</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2008/09/04/making-aspnet-datagrid-usable/" title="Next Post: Making the ASP.NET DataGrid Usable">Making the ASP.NET DataGrid Usable &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2010/08/16/dependency-injection-patterns/">Dependency Injection Patterns</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/01/19/iis-75-required-file-system-premissions/">IIS 7.5 Required File System Premissions</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/webpart-notes/">WebPart Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/sharepoint-workflow-notes/">SharePoint Workflow Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2008/11/26/resharper-fails-to-load-with-generic/">ReSharper Fails to Load with a Generic Error</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Robin Clowers -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

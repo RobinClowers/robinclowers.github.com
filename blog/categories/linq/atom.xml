@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Linq | Robin's development blog]]></title>
+  <link href="http://RobinClowers.github.com/blog/categories/linq/atom.xml" rel="self"/>
+  <link href="http://RobinClowers.github.com/"/>
+  <updated>2012-02-26T08:40:47-08:00</updated>
+  <id>http://RobinClowers.github.com/</id>
+  <author>
+    <name><![CDATA[Robin Clowers]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Linq To SQL Caching]]></title>
+    <link href="http://RobinClowers.github.com/blog/2008/06/25/linq-to-sql-caching/"/>
+    <updated>2008-06-25T20:55:00-07:00</updated>
+    <id>http://RobinClowers.github.com/blog/2008/06/25/linq-to-sql-caching</id>
+    <content type="html"><![CDATA[<div class='post'>
+<p>I ran into a weird behavior while trying out different usage patterns of Linq To SQL.  I noticed that some queries were not hitting the database!  Now I knew that Linq To SQL object tracking keeps cached copies of entities it retrieves, but my understanding was that it only used this for identity mapping and would never return stale results.  After some Googling and then looking at the internals of the System.Data.Linq.Table class with Reflector, I came to the conclusion that it was indeed returning its cached results.    This makes sense once you understand the way the data context works; I didn't realize the implications of object tracking.  Once an object has been retrieved once by a data context, its values will not be updated by the database.  This is key for the way optimistic concurrency support works in Linq to SQL, but if you are used to writing simple crud applications where you ignore concurrency it would be easy to overlook this.  </p>  <p>On thing still puzzles me though, if I change my call from</p>  <pre class="code">context.Products;</pre><p> to </p><pre class="code">context.Products.ToList();</pre><p>I would always hit the database.  It turns out that ToList calls GetEnumerator (which leads to a query being fired) whereas when I databind directly against the Table, it calls IListSource.GetList, which will return the cached table if it can.  Why wouldn't you query the database to check for new objects that might have been added to your results, and why couldn't the same query use the cache when I call ToList on it?</p></div>
+
+
+<h2>Comments</h2>
+
+
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Thanks for the comment Will!  I agree that using ToList is the most intuitive way to solve this, but it definitely acheives the desired effect.  Bindable LINQ looks really interesting, I have not tried using LINQ in a connected scenario, so I was unaware of those issues.</div>
+</div>
+<div class='comment'>
+<div class='author'>Will Hughes</div>
+<div class='content'>
+I've had a bunch of weirdness with LINQ caching - although most of mine have been around stored procs. <BR/><BR/>The .ToList() method, whilst crude, seems to be a good way to bypass a raft of issues. <BR/><BR/>The main drawback I found is that  unless you're using something like <A HREF="http://www.codeplex.com/bindablelinq" REL="nofollow">Bindable LINQ</A> you've just broken any eventing notifications right there should you subsequently update rows.  <BR/><BR/>Obviously it's not that important for ASP.NET and other backend services, but is more important for WinForms/Silverlight/WPF.</div>
+</div>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Deferred Execution in Linq to SQL]]></title>
+    <link href="http://RobinClowers.github.com/blog/2008/06/18/deferred-execution-in-linq-to-sql/"/>
+    <updated>2008-06-18T18:14:00-07:00</updated>
+    <id>http://RobinClowers.github.com/blog/2008/06/18/deferred-execution-in-linq-to-sql</id>
+    <content type="html"><![CDATA[<div class='post'>
+<p>Just like the last post, this one is motivated by a <a href="https://www.blogger.com/comment.g?blogID=4214922889450630344&amp;postID=892965719237419004" target="_blank">comment</a> I got from someone identified as merlin981. Since we seem to have a running dialog, do you have a blog or other online presence? In any case, I wanted to explain my understanding of how Linq to SQL uses deferred execution because merlin and I seemed to have a very different ideas. </p>  <p>Let's take a look at a simple query like the one below.</p><pre class="code"><span style="color:blue;">var </span>dbContext = <span style="color:blue;">new </span><span style="color: rgb(43, 145, 175);">TestDataContext</span>();
+<span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select </span>x;</pre>At this point, the query is just and expression tree. When you iterate over the the results, the following single query executes against the database:
+<pre>SELECT [t0].[Id], [t0].[Name], [t0].[Price], [t0].[CategoryId]
+FROM [dbo].[Product] AS [t0]</pre>At this point, I can access the Id, Name and CategoryId of all the products that were in the the database without any other connections to the database. On the other hand, if you were to do something like this:
+<pre class="code"><span style="color:blue;">foreach </span>(<span style="color:blue;">var </span>product <span style="color:blue;">in </span>result)
+{
+  Response.Write(product.Category.Name);
+}</pre><p>This block of code is going to hit the database once for each product. Obviously we want to avoid that, and there are several ways to do so. One is to return an anonymous type containing just the columns we need:</p><pre class="code"><span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select new
+         </span>{
+             x.Name,
+             CategoryName = x.Category.Name
+         };
+
+<span style="color:blue;">foreach </span>(<span style="color:blue;">var </span>product <span style="color:blue;">in </span>result)
+{
+    Response.Write(product.CategoryName);
+}</pre><p></p><p></p>This method will do an inner join and pull back just the columns we asked for. Another way is to specify load options for our original query:
+
+<pre class="code"><span style="color:blue;">var </span>dbContext = <span style="color:blue;">new </span><span style="color: rgb(43, 145, 175);">TestDataContext</span>();
+dbContext.LoadOptions.LoadWith&lt;<span style="color: rgb(43, 145, 175);">Product</span>&gt;(p =&gt; p.Category);
+<span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select </span>x;</pre><p>This tells the Linq to SQL Execution engine to load all the fields in the Category entity for each product. The generated SQL is below.</p><pre>SELECT [t0].[Id], [t0].[Name], [t0].[Price], [t0].[CategoryId], [t1].[Name] AS [Name2]
+FROM [dbo].[Product] AS [t0]
+INNER JOIN [dbo].[Category] AS [t1] ON [t1].[Id] = [t0].[CategoryId]</pre><p>I hope this has been a helpful example of how Linq To SQL uses deferred execution.
+</p></div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Stored Procedures, a Best Practice?]]></title>
+    <link href="http://RobinClowers.github.com/blog/2008/06/09/stored-procedures-best-practice/"/>
+    <updated>2008-06-09T18:11:00-07:00</updated>
+    <id>http://RobinClowers.github.com/blog/2008/06/09/stored-procedures-best-practice</id>
+    <content type="html"><![CDATA[<div class='post'>
+<p>I just saw <a href="http://www.blogger.com/profile/05516602905783627586">merlin981</a>'s <a href="http://www.blogger.com/comment.g?blogID=4214922889450630344&amp;postID=2482102627266714910" target="_blank">comment</a> on my LINQ to SQL post, thanks for taking time to leave it!&#160; That said, I think the term &quot;Best Practice&quot; is something of a misnomer here.&#160; There has been <a href="http://weblogs.asp.net/fbouma/archive/2003/11/18/38178.aspx" target="_blank">much</a> <a href="http://weblogs.asp.net/rhoward/archive/2003/11/17/38095.aspx" target="_blank">written</a> on <a href="http://codebetter.com/blogs/eric.wise/archive/2006/05/24/145393.aspx" target="_blank">both</a>&#160;<a href="http://nhibernate.codebetter.com/blogs/jeremy.miller/archive/2005/07/06/130094.aspx">sides</a> of this debate.&#160; One thing is for sure, though, a parameterized query is compiled just like a stored procedure on SQL Sever version 7.0 and on.&#160; From <a href="http://weblogs.asp.net/fbouma/" target="_blank">Frans Bouma's blog</a>, I found this <a href="http://msdn.microsoft.com/en-us/library/aa174792.aspx" target="_blank">article</a> in the SQL Server's Books Online:</p>  <blockquote>   <p>SQL Server 2000 and SQL Server version 7.0 incorporate a number of changes to statement processing that extend many of the performance benefits of stored procedures to all SQL statements. SQL Server 2000 and SQL Server 7.0 do not save a partially compiled plan for stored procedures when they are created. A stored procedure is compiled at execution time, like any other Transact-SQL statement. SQL Server 2000 and SQL Server 7.0 retain execution plans for all SQL statements in the procedure cache, not just stored procedure execution plans. </p> </blockquote>  <p>So I think it is clear that sprocs will not be significantly faster than ad hoc SQL for simple cases.&#160; This is not to say that you should never use sprocs, on the contrary, there are situations where sprocs will be the only good solution (for instance, complex data manipulation that requires temporary tables). The point is that using an ORM can make development easier by allowing you to ignore the SQL for the majority of cases.&#160; If you see that parts of your application are slow, then you can fix that. </p>  <p>Merlin also mentioned that running queries directly against tables uses deferred execution like it is a bad thing.&#160; Deferred execution is what allows LINQ to work at all, and can improve performance in many scenarios.&#160; Of course, like any tool, it can get you into trouble if you don't understand it.</p>  </div>
+
+
+<h2>Comments</h2>
+
+
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Hi again merlin, it seems like you may be misunderstanding how Linq to Sql uses deferred execution, so I posted an <A HREF="http://robinclowers.blogspot.com/2008/06/deferred-execution-in-linq-to-sql.html" REL="nofollow">explaination</A> of it.</div>
+</div>
+<div class='comment'>
+<div class='author'>merlin981</div>
+<div class='content'>
+Thank you for the response. I concede you are correct that stored procedures are not pre-compiled in SQL Server 2000 and 2005. This is definitely an under-discussed change from previous versions.<BR/><BR/>However, I do still believe stored procedures are better, if for no other reason than security. First, for the added layer of security from SQL injection attacks. Second, from the added layer of internal security (you can grant execute permission to the IIS user for stored procedures, but deny execute/insert/delete on all other SQL commands).<BR/><BR/>Regarding deferred execution, I can see it as a good thing in a limited number of scenarios. The problem with deferred execution is that developers (especially ones new to LINQ), are accustomed to knowing that when they have a List or other IENumerable/IQueryable object, the data is already there. However, with deferred execution, the data is not "there" until you request that particular element. Also, especially with SQL, the element can change before you make the request for it.<BR/><BR/>The majority of the time, the developer wants (and probably needs) the data to be there immediately. Without properly understanding deferred execution, the developer could think that his IQueryable object is fully populated, when it is not.<BR/><BR/>There is also a performance penalty, in my opinion, for deferred execution on LINQ to SQL. The problem comes when you iterate through the list; you are constantly querying the database. Constantly requesting one row at a time can have serious consequences on a production database that services several hundred users per minute. This is another advantage of stored procedures (for LINQ to SQL), because the sproc forces the database to return all the data back to LINQ immediately. In this way, regardless of deferred execution, the developer can be assured that a) he/she has only queried the database once, and b) all the data is available and will <B>not</B> change during the iteration of the data.<BR/><BR/>Thank you for this interesting conversation, Robin. The research was fun and educational.</div>
+</div>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Linq To SQL]]></title>
+    <link href="http://RobinClowers.github.com/blog/2008/05/29/linq-to-sql/"/>
+    <updated>2008-05-29T22:22:00-07:00</updated>
+    <id>http://RobinClowers.github.com/blog/2008/05/29/linq-to-sql</id>
+    <content type="html"><![CDATA[<div class='post'>
+<p>Linq to SQL is an object relational mapper (ORM) that is included in .NET 3.5.&#160; The Linq to SQL designer allows you to create objects from you database tables simply by dragging the tables from the server explorer to the design surface.&#160; You can customize the generated types in the designer or write code in partial classes.&#160; Once you have defined your model, you can query it with Linq syntax and the SQL provider will generate the appropriate database calls for you.</p>  <p>One limitation of Linq to SQL is a given object can only be populated from one table.&#160; This means that your object will map almost one to one with your database tables.&#160; For anything but the simplest applications, you don't want to work with the database tables.&#160; For these situations, you could use Linq to SQL to populate domain objects.&#160; Keep in mind that there is a performance overhead in creating these objects as opposed to using raw ADO.NET.&#160; <a href="http://blogs.msdn.com/ricom/" target="_blank">Rico Mariani</a> has a good series of blog <a href="http://blogs.msdn.com/ricom/archive/2007/06/22/dlinq-linq-to-sql-performance-part-1.aspx" target="_blank">posts</a> about Linq to SQL performance, but I suggest profiling your application if you think it will be a problem.</p>  </div>
+
+
+<h2>Comments</h2>
+
+
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Hi merlin, thanks for your comment.  I started to refute your argument in this comment, but it turned into a whole <A HREF="http://robinclowers.blogspot.com/2008/06/stored-procedures-best-practice.html" REL="nofollow">post</A>.  If you have a minute, please check it out.</div>
+</div>
+<div class='comment'>
+<div class='author'>merlin981</div>
+<div class='content'>
+Even though the designer allows tables to be used, it is still considered best practice to use stored procedures. LINQ to SQL does highly optimize the SQL code, but it must still be compiled by the SQL Server before execution (not to mention the fact that calling on tables uses deferred execution).<BR/><BR/>Stored procedures allow the sql commands to be compiled and optimized on the SQL Server itself, which will result in faster execution. Also, sprocs can query multiple tables, databases, and servers.<BR/><BR/>Philip<BR/><A HREF="http://www.linqexchange.com" REL="nofollow">LINQ Exchange - Learn LINQ and Lambda Expressions</A></div>
+</div>
+</div>
+
+]]></content>
+  </entry>
+  
+</feed>

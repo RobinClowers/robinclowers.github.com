@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Personal | Robin's development blog]]></title>
+  <link href="http://RobinClowers.github.com/blog/categories/personal/atom.xml" rel="self"/>
+  <link href="http://RobinClowers.github.com/"/>
+  <updated>2012-02-26T08:40:47-08:00</updated>
+  <id>http://RobinClowers.github.com/</id>
+  <author>
+    <name><![CDATA[Robin Clowers]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Took the Plunge]]></title>
+    <link href="http://RobinClowers.github.com/blog/2008/05/01/took-plunge/"/>
+    <updated>2008-05-01T21:09:00-07:00</updated>
+    <id>http://RobinClowers.github.com/blog/2008/05/01/took-plunge</id>
+    <content type="html"><![CDATA[<div class='post'>
+I have been thinking about starting a blog for a while, so I am finally writing my first post.  I recently attended the alt.net open spaces in Seattle, and some conversations I had there made me decide to start a blog.
+
+A little background;   I have been a computer geek since I was a kid, but I never did any amount of programming until I started college in 2003.  I have been working as an ASP.NET developer since January 2006, and I graduated from school in the beginning of 2007.
+
+I'm not sure what the goal of this blog is yet, for the time being I am going to post problems I run into ( and hopefully resolve:-) ).  Hopefully other people will get some benefit from it as well, but if nothing else, it will be a good reference for me.</div>
+
+
+<h2>Comments</h2>
+
+
+<div class='comments'>
+<div class='comment'>
+<div class='author'>jurgenappelo</div>
+<div class='content'>
+Good luck on your blog. Blogging is a lot of fun!</div>
+</div>
+<div class='comment'>
+<div class='author'>Stephen</div>
+<div class='content'>
+OMG Robin, you finally have a blog! I have been a fan of yours for such a long time! I can't wait to read all the wonderful stuff you have to say and teach us!</div>
+</div>
+</div>
+
+]]></content>
+  </entry>
+  
+</feed>

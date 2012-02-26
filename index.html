@@ -9,7 +9,7 @@
   <meta name="author" content="Robin Clowers">
 
   
-  <meta name="description" content=" Blog Archives Recent Posts ">
+  <meta name="description" content="I had a twitter conversation a while back with Paul Hammant about different ways to use a IoC container. Paul is one of the leads on PicoContainer, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -65,7 +65,593 @@
       <div class="blog-index">
   
   
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/08/16/dependency-injection-patterns/">Dependency Injection Patterns</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-08-16T18:05:00-07:00" pubdate data-updated="true">Aug 16<span>th</span>, 2010</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>I had a twitter conversation a while back with <a href="http://paulhammant.com/" target="_blank">Paul Hammant</a> about different ways to use a IoC container.  Paul is one of the leads on PicoContainer, one of the Java containers.  It all started with him coming across the <a href="http://commonservicelocator.codeplex.com/" target="_blank">Common Service Locator</a>, which is an adapter to allow frameworks to leverage a container without forcing consumers to use a specific one.  He had a big problem with one part of the implementation, the <a href="http://commonservicelocator.codeplex.com/SourceControl/changeset/view/63489#332683" target="_blank">ServiceLocator</a> class.  This class is a static gateway to the container, and he pointed out this is the antithesis of dependency injection and inversion of control.  While this is true, there has to be at least one place (usual a few places) in your application that gets access to the container to inject everything else.  </p>  <p>In asp.net, this is usually achieved  by storing your container in the ApplicationState dictionary, and then accessing it where it is needed.  This pattern ends up being recreated in every application that uses a container, so container authors hid this functionality behind a static gateway.  Is this a bad thing?  If used as intended, I don’t see much real difference between using a global dictionary and using a static gateway (in fact, you could argue that the gateway is cleaner).  Paul’s point; however, was that giving developers access to this static gateway will lead to it being used all sorts of places it shouldn’t.  In practice, I have seen applications where is happens to some extent, but in many cases it has more to do with the lack of DI support in asp.net.</p>  <p>Paul proposed a way to control access to the container using packages in java.  I came up with something similar in .net, although I had to use a separate assembly to enforce separation.  For asp.net mvc, it boils down to putting your controller factory and other extension points in their own assembly, and wrapping the container to make the various resolution methods internal.  That way, they can only be used in this infrastructure assembly.  I am not crazy about having to wrap the container, but it’s not that much code:</p>
+<pre class="brush: csharp;">public class ContainerWrapper
+{
+ public const string ContainerKey = "Container";
+ Container container;
+
+ public void InitializeContainer()
+ {
+     container = new Container();
+     container.Configure(c =&gt; c.Scan(s =&gt;
+     {
+         s.WithDefaultConventions();
+         s.AddAllTypesOf&lt;IController&gt;();
+     }));
+
+     HttpContext.Current.Application[ContainerKey] = this;
+ }
+
+ internal object GetInstance(Type type)
+ {
+     return container.GetInstance(type);
+ }
+
+ internal T GetInstance&lt;T&gt;()
+ {
+     return container.GetInstance&lt;T&gt;();
+ }
+}</pre>
+<p>This is example uses StructureMap, and is very simplistic.  In a real application you would probably want to scan for registries that would contain the registration logic (those would be in you main web assembly).  The ControllerFactory looks this:</p>
+<pre class="brush: csharp;">public class StructureMapControllerFactory : DefaultControllerFactory
+{
+ protected override IController GetControllerInstance(
+     RequestContext requestContext, Type controllerType)
+ {
+     var application = requestContext.HttpContext.Application;
+     var container = (ContainerWrapper)application[ContainerWrapper.ContainerKey];
+     return container.GetInstance(controllerType) as IController;
+ }
+}</pre>
+<p>A complete sample project showing this off is on <a href="http://github.com/RobinClowers/Samples/tree/master/DependencyInjectionDemoMvc/">Github</a>.</p><p>So I’m curious about two things.  First, in your experience, do developers abuse service locators when they could be using dependency injection?  Second, would it help to hide the container in an infrastructure assembly, only exposing a the registration and base classes that access the container internally?</p><p>
+</p></div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>kneebar100</div>
+<div class='content'>
+seem like an artificial boundary&#8230;.what are you getting out of having a separate assembly?<br /><br />Wouldn&#39;t you lose ability to configure the container more easily?</div>
+</div>
+</div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2010/01/19/iis-75-required-file-system-premissions/">IIS 7.5 Required File System Premissions</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2010-01-19T14:57:00-08:00" pubdate data-updated="true">Jan 19<span>th</span>, 2010</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+To host a site on IIS 7.5, you need to grant the application pool account access and to the source files. By default this is set to ApplicationPoolIdentity, which is the built in system account IIS_IUSRS.  If you don&#8217;t do this, you will get the following error:<div><blockquote>HTTP Error 500.19 - Internal Server Error
+The requested page cannot be accessed because the related configuration data for the page is invalid.</blockquote></div><div>If you want to allow anonymous access to the site, you also need to grant the Anonymous user identity access to these files.  By default this is the build in system account IUSR. If you dont do this you will get this error:</div><div><blockquote>HTTP Error 401.3 - Unauthorized
+You do not have permission to view this directory or page because of the access control list (ACL) configuration or encryption settings for this resource on the Web server..</blockquote></div><div>Hopefully this saves someone else (and me!) time.</div></div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2009/08/19/webpart-notes/">WebPart Notes</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-08-19T11:20:00-07:00" pubdate data-updated="true">Aug 19<span>th</span>, 2009</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+Here are some notes from building a SharePoint web part.
+<ul><li>It seems when you deploy a feature containing web parts, you still have to add it to the web part gallery for each site. </li><li>If you want to reference controls in the CONTROLTEMPLATES directory, you can use the virtual path ~/_controltemplates.</li><li>If your controls have a code behind that is strong named, you must fully qualify the Inherits attribute of the @Control directive. </li><li>To remove broken webparts from a page, add the query string ?contents=1 to the URL. (Via <a href="http://sharepointinsight.blogspot.com/2008/06/remove-bad-or-broken-web-parts-from.html">http://sharepointinsight.blogspot.com/2008/06/remove-bad-or-broken-web-parts-from.html</a>) </li><li>To disable friendly error messages (and see the yellow screen of death) </li><ul><li>set the CallStack attribute of the SafeMode node to true </li><li>set CustomErrors mode attribute to Off </li><li>set debug attribute of the Compilation node to true </li></ul></ul></div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2009/08/19/sharepoint-workflow-notes/">SharePoint Workflow Notes</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-08-19T11:17:00-07:00" pubdate data-updated="true">Aug 19<span>th</span>, 2009</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>Here are some notes from my experience building a SharePoint state machine workflow.</p><ul><li>All fields delcared on the workflow object must be serializable type or marked nonSerializedAny activities before the workflow activated event will not have access to workflow properties </li>
+<li>Remember to remove dll&#8217;s from the GAC when building, GAC&#8217;ed versions will supersede local versions </li>
+<li>Emailing from SharePoint requires the network service account to have local activation permission for &#8220;IIS WAMREG Admin Service&#8221; (a dcom service): <a href="http://www.cleverworkarounds.com/2007/10/25/dcom-fun-with-sharepoint/">http://www.cleverworkarounds.com/2007/10/25/dcom-fun-with-sharepoint/</a> </li>
+<li>There is a bug in the delay activity, here are some patches: <a href="http://blogs.msdn.com/sharepoint/archive/2008/07/15/announcing-availability-of-infrastructure-updates.aspx">http://blogs.msdn.com/sharepoint/archive/2008/07/15/announcing-availability-of-infrastructure-updates.aspx</a>, <a href="http://support.microsoft.com/kb/953630/">http://support.microsoft.com/kb/953630/</a> </li>
+<li>SetSate is not like a return, the rest of the activities in that phase will still execute </li>
+<li>You cannot have more than one list template in a feature </li>
+<li>Set workflow logging level use this command:
+<ul>
+<li>stsadm -o setlogginglevel -category &#8220;Workflow Infrastructure&#8221; -tracelevel verbose </li></ul></li>
+<li>To get and set timer settings use this command:
+<ul>
+<li>stsadm -o getproperty -pn job-workflow -url <a href="http://localhost/">http://localhost/</a> </li>
+<li>stsadm -o setproperty -pn job-workflow -pv &#8220;Every 1 minutes between 0 and 59&#8221; -url <a href="http://localhost/">http://localhost/</a> </li></ul></li>
+<li>To allow unsigned powershell scripts to run use this command:
+</li><ul><li>Set-ExecutionPolicy Unrestricted
+</li></ul></ul><h4>Workflow Versioning
+</h4><ul><li>There is no concept of versioning for Visual Studio created SharePoint workflows </li>
+<li>Instead, include the version in the feature path, name, description and workflow name and description </li>
+<li>Change the assembly version, and the version in each of the other places </li>
+<li>Deploy as a new feature </li>
+<li>Make sure the old workflow is marked &#8220;No new instances&#8221; after you associate the new version (this should be automatic) </li>
+<li>Based on this, it seems like workflows should be in their own features to allow for simpler versioning </li>
+<li>Delay activities were not working correctly </li>
+<li>Worked with MS Premier support for weeks to try and resolve this </li>
+<li>Resetting the SharePoint timer service made the delay activity work correctly </li>
+<li>When they are initialized in the designer, setting the value to something else in the initialize event does not work </li>
+<li>If you bind the timeout property to a dependency field then it can be set in the initialize timeout handler, much like SendEmailActivity properties </li></ul></div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/11/26/resharper-fails-to-load-with-generic/">ReSharper Fails to Load With a Generic Error</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-11-26T19:11:00-08:00" pubdate data-updated="true">Nov 26<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>After installing Resharper 4.1 on Windows 2003 server, I got this message  when I start Visual Studio
+2008: </p> <blockquote> <p>The Add-in &#8216;JetBrains ReSharper 4.1&#8217; failed to load or caused an 
+exception. </p> <p>Error Message: The system cannot find the file specified. </p> <p>Error Number: 80070002</p></blockquote> <p>I emailed JetBrains support and got a quick response.  It turns out my system  did not have Extensibility.dll installed in the GAC (Global Assembly Cache), and  ReSharper requires this dll to run.  </p> <p>To figure this out, I opened explorer to the path &#8220;%windir%\assembly&#8221;, which  brings up a shell extension that displays the contents of your GAC.</p> <p>The fix was easy, I just had to find the dll, which is installed with Visual  Studio.  Once I knew the location, I opened the Visual Studio command prompt and  ran </p> <blockquote> <p>gacutil /i  &#8221;C:\Program Files\Common Files\Microsoft  Shared\MSENV\PublicAssemblies&#8221;</p></blockquote> <p>Hopefully this saves someone else some time.</p></div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/09/04/making-aspnet-datagrid-usable/">Making the ASP.NET DataGrid Usable</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-09-04T22:00:00-07:00" pubdate data-updated="true">Sep 4<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>If you have ever used an ASP.NET DataGrid (or GridView without a DataSource control), then you know there is a lot of boiler plate code needed.&nbsp; The project I am working on right now has a bunch of grids that need to edit, add and page over a certain data type, so I we wanted to avoid duplicating all that code across every page.&nbsp; </p> <p>A little research and a prototype later, I came up with what I call the AutoGrid.&nbsp; For the most part, it just handles the editing, paging and error handling internally.&nbsp; Arguably more interesting is the fact that it is a generic control; I was under the impression that web controls could not have type parameters.&nbsp; While this is technically true, there is a cool work around, which is detailed in a <a href="http://weblogs.asp.net/leftslipper/archive/2007/12/04/how-to-allow-generic-controls-in-asp-net-pages.aspx" target="_blank">blog post</a> by Eilon Lipton.&nbsp; </p> <p>Basically, you need create a control with generic arguments, and whatever functionality you are after. Then to create another control to second control to be used in asp.net markup. It needs to inherits from the first control and have a string property for each generic argument.&nbsp; Finally you override the ControlBuilder for your first control and construct your second control by passing the type arguments to a Type&nbsp; instance of the generic control.&nbsp; The code for the non-generic markup control is below:</p><pre class="code">[<span style="color: #2b91af">ControlBuilder</span>(<span style="color: blue">typeof</span>(<span style="color: #2b91af">GenericControlBuilder</span>))]
+<span style="color: blue">public class </span><span style="color: #2b91af">GenericGrid </span>: <span style="color: #2b91af">AutoGrid</span>&lt;<span style="color: #2b91af">Object</span>&gt;
+{
+  <span style="color: blue">private string </span>_objectType;
+
+  <span style="color: blue">public string </span>ObjectType
+  {
+      <span style="color: blue">get
+      </span>{
+          <span style="color: blue">if </span>(_objectType == <span style="color: blue">null</span>)
+          {
+              <span style="color: blue">return </span><span style="color: #2b91af">String</span>.Empty;
+          }
+          <span style="color: blue">return </span>_objectType;
+      }
+      <span style="color: blue">set
+      </span>{
+          _objectType = <span style="color: blue">value</span>;
+      }
+  }
+}</pre><pre class="code"></pre>
+<p>As you can see, it doesn&#8217;t do much by itself.&nbsp; The ControlBuilder is where the magic happens (this code is straight from Eilon&#8217;s example):</p><pre class="code"><span style="color: blue">public class </span><span style="color: #2b91af">GenericControlBuilder </span>: <span style="color: #2b91af">ControlBuilder
+</span>{
+  <span style="color: blue">public override void </span>Init(<span style="color: #2b91af">TemplateParser </span>parser, <span style="color: #2b91af">ControlBuilder </span>parentBuilder,
+      <span style="color: #2b91af">Type </span>type, <span style="color: blue">string </span>tagName, <span style="color: blue">string </span>id, <span style="color: #2b91af">IDictionary </span>attribs)
+  {
+<strike></strike>
+      <span style="color: #2b91af">Type </span>newType = type;
+
+      <span style="color: blue">if </span>(attribs.Contains(<span style="color: #a31515">"objecttype"</span>))
+      {
+          <span style="color: green">// If objecttype is specified, create a generic type that is bound
+          // to that argument and then hide the objecttype attribute.
+          </span><span style="color: #2b91af">Type </span>genericArg = <span style="color: #2b91af">Type</span>.GetType(
+              (<span style="color: blue">string</span>)attribs[<span style="color: #a31515">"objecttype"</span>], <span style="color: blue">true</span>, <span style="color: blue">true</span>);
+          <span style="color: #2b91af">Type </span>genericType = <span style="color: blue">typeof</span>(<span style="color: #2b91af">AutoGrid</span>&lt;&gt;);
+          newType = genericType.MakeGenericType(genericArg);
+          attribs.Remove(<span style="color: #a31515">"objecttype"</span>);
+      }
+
+      <span style="color: blue">base</span>.Init(parser, parentBuilder, newType, tagName, id, attribs);
+  }
+}</pre><pre class="code"></pre><pre class="code"><span style="font-family: georgia">The other thing that makes this work is an IoC container.  In this case I'm using <a href="http://structuremap.sourceforge.net/" target="_blank">Structure Map</a>, but any IoC would work.  The idea is that since the AutoGrid knows the type it is editing, it can ask for the appropriate data access class.  <a href="http://www.lostechies.com/blogs/chad_myers/" target="_blank">Chad Myers</a> helped me get the configuration right, using a custom TypeScanner:</span></pre><pre class="code"><span style="color: blue">public class </span><span style="color: #2b91af">RepositoryConventionScanner </span>: <span style="color: #2b91af">ITypeScanner
+</span>{
+  <span style="color: blue">public void </span>Process(<span style="color: #2b91af">Type </span>type, <span style="color: #2b91af">Registry </span>registry)
+  {
+      <span style="color: #2b91af">Type </span>repoForType = GetGenericParamFor(type.BaseType, <span style="color: blue">typeof</span>(<span style="color: #2b91af">Repository</span>&lt;&gt;));
+
+      <span style="color: blue">if </span>(repoForType != <span style="color: blue">null</span>)
+      {
+          <span style="color: blue">var </span>genType = <span style="color: blue">typeof</span>(<span style="color: #2b91af">IRepository</span>&lt;&gt;).MakeGenericType(repoForType);
+          registry
+              .ForRequestedType(genType)
+              .AddInstance(<span style="color: blue">new </span><span style="color: #2b91af">ConfiguredInstance</span>(type));
+      }
+  }
+
+  <span style="color: blue">private static </span><span style="color: #2b91af">Type </span>GetGenericParamFor(<span style="color: #2b91af">Type </span>typeToInspect, <span style="color: #2b91af">Type </span>genericType)
+  {
+      <span style="color: blue">if </span>(typeToInspect != <span style="color: blue">null
+          </span>&amp;&amp; typeToInspect.IsGenericType
+          &amp;&amp; typeToInspect.GetGenericTypeDefinition().Equals(genericType))
+      {
+          <span style="color: blue">return </span>typeToInspect.GetGenericArguments()[0];
+      }
+
+      <span style="color: blue">return null</span>;
+  }</pre><pre class="code"></pre><pre class="code"><span style="font-family: georgia">Then in your Application_Start event, just tell Structure Map to run this scanner on your assembly:</span></pre><pre class="code"><span style="color: #2b91af">StructureMapConfiguration
+  </span>.ScanAssemblies()
+  .IncludeAssemblyContainingType&lt;<span style="color: #2b91af">GenericGrid</span>&gt;()
+  .With(<span style="color: blue">new </span><span style="color: #2b91af">RepositoryConventionScanner</span>());</pre><pre class="code"></pre><pre class="code"><span style="font-family: georgia">I wrote this code for a pretty specific situation, your mileage may vary.  I would love to hear thoughts about this, if you care to see the whole solution you can get it <a href="http://www.filefactory.com/file/1fb8fa/n/AutoGridSample_zip" target="_blank">here</a>. </span></pre>  </div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/06/25/linq-to-sql-caching/">Linq to SQL Caching</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-06-25T20:55:00-07:00" pubdate data-updated="true">Jun 25<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>I ran into a weird behavior while trying out different usage patterns of Linq To SQL.  I noticed that some queries were not hitting the database!  Now I knew that Linq To SQL object tracking keeps cached copies of entities it retrieves, but my understanding was that it only used this for identity mapping and would never return stale results.  After some Googling and then looking at the internals of the System.Data.Linq.Table class with Reflector, I came to the conclusion that it was indeed returning its cached results.    This makes sense once you understand the way the data context works; I didn&#8217;t realize the implications of object tracking.  Once an object has been retrieved once by a data context, its values will not be updated by the database.  This is key for the way optimistic concurrency support works in Linq to SQL, but if you are used to writing simple crud applications where you ignore concurrency it would be easy to overlook this.  </p>  <p>On thing still puzzles me though, if I change my call from</p>  <pre class="code">context.Products;</pre><p> to </p><pre class="code">context.Products.ToList();</pre><p>I would always hit the database.  It turns out that ToList calls GetEnumerator (which leads to a query being fired) whereas when I databind directly against the Table, it calls IListSource.GetList, which will return the cached table if it can.  Why wouldn&#8217;t you query the database to check for new objects that might have been added to your results, and why couldn&#8217;t the same query use the cache when I call ToList on it?</p></div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Thanks for the comment Will!  I agree that using ToList is the most intuitive way to solve this, but it definitely acheives the desired effect.  Bindable LINQ looks really interesting, I have not tried using LINQ in a connected scenario, so I was unaware of those issues.</div>
+</div>
+<div class='comment'>
+<div class='author'>Will Hughes</div>
+<div class='content'>
+I&#8217;ve had a bunch of weirdness with LINQ caching - although most of mine have been around stored procs. <BR/><BR/>The .ToList() method, whilst crude, seems to be a good way to bypass a raft of issues. <BR/><BR/>The main drawback I found is that  unless you&#8217;re using something like <A HREF="http://www.codeplex.com/bindablelinq" REL="nofollow">Bindable LINQ</A> you&#8217;ve just broken any eventing notifications right there should you subsequently update rows.  <BR/><BR/>Obviously it&#8217;s not that important for ASP.NET and other backend services, but is more important for WinForms/Silverlight/WPF.</div>
+</div>
+</div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/06/18/deferred-execution-in-linq-to-sql/">Deferred Execution in Linq to SQL</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-06-18T18:14:00-07:00" pubdate data-updated="true">Jun 18<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>Just like the last post, this one is motivated by a <a href="https://www.blogger.com/comment.g?blogID=4214922889450630344&amp;postID=892965719237419004" target="_blank">comment</a> I got from someone identified as merlin981. Since we seem to have a running dialog, do you have a blog or other online presence? In any case, I wanted to explain my understanding of how Linq to SQL uses deferred execution because merlin and I seemed to have a very different ideas. </p>  <p>Let&#8217;s take a look at a simple query like the one below.</p><pre class="code"><span style="color:blue;">var </span>dbContext = <span style="color:blue;">new </span><span style="color: rgb(43, 145, 175);">TestDataContext</span>();
+<span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select </span>x;</pre>At this point, the query is just and expression tree. When you iterate over the the results, the following single query executes against the database:
+<pre>SELECT [t0].[Id], [t0].[Name], [t0].[Price], [t0].[CategoryId]
+FROM [dbo].[Product] AS [t0]</pre>At this point, I can access the Id, Name and CategoryId of all the products that were in the the database without any other connections to the database. On the other hand, if you were to do something like this:
+<pre class="code"><span style="color:blue;">foreach </span>(<span style="color:blue;">var </span>product <span style="color:blue;">in </span>result)
+{
+  Response.Write(product.Category.Name);
+}</pre><p>This block of code is going to hit the database once for each product. Obviously we want to avoid that, and there are several ways to do so. One is to return an anonymous type containing just the columns we need:</p><pre class="code"><span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select new
+         </span>{
+             x.Name,
+             CategoryName = x.Category.Name
+         };
+
+<span style="color:blue;">foreach </span>(<span style="color:blue;">var </span>product <span style="color:blue;">in </span>result)
+{
+    Response.Write(product.CategoryName);
+}</pre><p></p><p></p>This method will do an inner join and pull back just the columns we asked for. Another way is to specify load options for our original query:
+
+<pre class="code"><span style="color:blue;">var </span>dbContext = <span style="color:blue;">new </span><span style="color: rgb(43, 145, 175);">TestDataContext</span>();
+dbContext.LoadOptions.LoadWith&lt;<span style="color: rgb(43, 145, 175);">Product</span>&gt;(p =&gt; p.Category);
+<span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select </span>x;</pre><p>This tells the Linq to SQL Execution engine to load all the fields in the Category entity for each product. The generated SQL is below.</p><pre>SELECT [t0].[Id], [t0].[Name], [t0].[Price], [t0].[CategoryId], [t1].[Name] AS [Name2]
+FROM [dbo].[Product] AS [t0]
+INNER JOIN [dbo].[Category] AS [t1] ON [t1].[Id] = [t0].[CategoryId]</pre><p>I hope this has been a helpful example of how Linq To SQL uses deferred execution.
+</p></div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/06/09/stored-procedures-best-practice/">Stored Procedures, a Best Practice?</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-06-09T18:11:00-07:00" pubdate data-updated="true">Jun 9<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>I just saw <a href="http://www.blogger.com/profile/05516602905783627586">merlin981</a>&#8217;s <a href="http://www.blogger.com/comment.g?blogID=4214922889450630344&amp;postID=2482102627266714910" target="_blank">comment</a> on my LINQ to SQL post, thanks for taking time to leave it!&#160; That said, I think the term &quot;Best Practice&quot; is something of a misnomer here.&#160; There has been <a href="http://weblogs.asp.net/fbouma/archive/2003/11/18/38178.aspx" target="_blank">much</a> <a href="http://weblogs.asp.net/rhoward/archive/2003/11/17/38095.aspx" target="_blank">written</a> on <a href="http://codebetter.com/blogs/eric.wise/archive/2006/05/24/145393.aspx" target="_blank">both</a>&#160;<a href="http://nhibernate.codebetter.com/blogs/jeremy.miller/archive/2005/07/06/130094.aspx">sides</a> of this debate.&#160; One thing is for sure, though, a parameterized query is compiled just like a stored procedure on SQL Sever version 7.0 and on.&#160; From <a href="http://weblogs.asp.net/fbouma/" target="_blank">Frans Bouma&#8217;s blog</a>, I found this <a href="http://msdn.microsoft.com/en-us/library/aa174792.aspx" target="_blank">article</a> in the SQL Server&#8217;s Books Online:</p>  <blockquote>   <p>SQL Server 2000 and SQL Server version 7.0 incorporate a number of changes to statement processing that extend many of the performance benefits of stored procedures to all SQL statements. SQL Server 2000 and SQL Server 7.0 do not save a partially compiled plan for stored procedures when they are created. A stored procedure is compiled at execution time, like any other Transact-SQL statement. SQL Server 2000 and SQL Server 7.0 retain execution plans for all SQL statements in the procedure cache, not just stored procedure execution plans. </p> </blockquote>  <p>So I think it is clear that sprocs will not be significantly faster than ad hoc SQL for simple cases.&#160; This is not to say that you should never use sprocs, on the contrary, there are situations where sprocs will be the only good solution (for instance, complex data manipulation that requires temporary tables). The point is that using an ORM can make development easier by allowing you to ignore the SQL for the majority of cases.&#160; If you see that parts of your application are slow, then you can fix that. </p>  <p>Merlin also mentioned that running queries directly against tables uses deferred execution like it is a bad thing.&#160; Deferred execution is what allows LINQ to work at all, and can improve performance in many scenarios.&#160; Of course, like any tool, it can get you into trouble if you don&#8217;t understand it.</p>  </div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Hi again merlin, it seems like you may be misunderstanding how Linq to Sql uses deferred execution, so I posted an <A HREF="http://robinclowers.blogspot.com/2008/06/deferred-execution-in-linq-to-sql.html" REL="nofollow">explaination</A> of it.</div>
+</div>
+<div class='comment'>
+<div class='author'>merlin981</div>
+<div class='content'>
+Thank you for the response. I concede you are correct that stored procedures are not pre-compiled in SQL Server 2000 and 2005. This is definitely an under-discussed change from previous versions.<BR/><BR/>However, I do still believe stored procedures are better, if for no other reason than security. First, for the added layer of security from SQL injection attacks. Second, from the added layer of internal security (you can grant execute permission to the IIS user for stored procedures, but deny execute/insert/delete on all other SQL commands).<BR/><BR/>Regarding deferred execution, I can see it as a good thing in a limited number of scenarios. The problem with deferred execution is that developers (especially ones new to LINQ), are accustomed to knowing that when they have a List or other IENumerable/IQueryable object, the data is already there. However, with deferred execution, the data is not &#8220;there&#8221; until you request that particular element. Also, especially with SQL, the element can change before you make the request for it.<BR/><BR/>The majority of the time, the developer wants (and probably needs) the data to be there immediately. Without properly understanding deferred execution, the developer could think that his IQueryable object is fully populated, when it is not.<BR/><BR/>There is also a performance penalty, in my opinion, for deferred execution on LINQ to SQL. The problem comes when you iterate through the list; you are constantly querying the database. Constantly requesting one row at a time can have serious consequences on a production database that services several hundred users per minute. This is another advantage of stored procedures (for LINQ to SQL), because the sproc forces the database to return all the data back to LINQ immediately. In this way, regardless of deferred execution, the developer can be assured that a) he/she has only queried the database once, and b) all the data is available and will <B>not</B> change during the iteration of the data.<BR/><BR/>Thank you for this interesting conversation, Robin. The research was fun and educational.</div>
+</div>
+</div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/05/29/linq-to-sql/">Linq to SQL</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-05-29T22:22:00-07:00" pubdate data-updated="true">May 29<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>Linq to SQL is an object relational mapper (ORM) that is included in .NET 3.5.&#160; The Linq to SQL designer allows you to create objects from you database tables simply by dragging the tables from the server explorer to the design surface.&#160; You can customize the generated types in the designer or write code in partial classes.&#160; Once you have defined your model, you can query it with Linq syntax and the SQL provider will generate the appropriate database calls for you.</p>  <p>One limitation of Linq to SQL is a given object can only be populated from one table.&#160; This means that your object will map almost one to one with your database tables.&#160; For anything but the simplest applications, you don&#8217;t want to work with the database tables.&#160; For these situations, you could use Linq to SQL to populate domain objects.&#160; Keep in mind that there is a performance overhead in creating these objects as opposed to using raw ADO.NET.&#160; <a href="http://blogs.msdn.com/ricom/" target="_blank">Rico Mariani</a> has a good series of blog <a href="http://blogs.msdn.com/ricom/archive/2007/06/22/dlinq-linq-to-sql-performance-part-1.aspx" target="_blank">posts</a> about Linq to SQL performance, but I suggest profiling your application if you think it will be a problem.</p>  </div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Hi merlin, thanks for your comment.  I started to refute your argument in this comment, but it turned into a whole <A HREF="http://robinclowers.blogspot.com/2008/06/stored-procedures-best-practice.html" REL="nofollow">post</A>.  If you have a minute, please check it out.</div>
+</div>
+<div class='comment'>
+<div class='author'>merlin981</div>
+<div class='content'>
+Even though the designer allows tables to be used, it is still considered best practice to use stored procedures. LINQ to SQL does highly optimize the SQL code, but it must still be compiled by the SQL Server before execution (not to mention the fact that calling on tables uses deferred execution).<BR/><BR/>Stored procedures allow the sql commands to be compiled and optimized on the SQL Server itself, which will result in faster execution. Also, sprocs can query multiple tables, databases, and servers.<BR/><BR/>Philip<BR/><A HREF="http://www.linqexchange.com" REL="nofollow">LINQ Exchange - Learn LINQ and Lambda Expressions</A></div>
+</div>
+</div>
+</div>
+  
+  
+
+
+    </article>
+  
   <div class="pagination">
+    
+      <a class="prev" href="/blog/page/2/">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
     
@@ -76,6 +662,26 @@
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2010/08/16/dependency-injection-patterns/">Dependency Injection Patterns</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/01/19/iis-75-required-file-system-premissions/">IIS 7.5 Required File System Premissions</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/webpart-notes/">WebPart Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/sharepoint-workflow-notes/">SharePoint Workflow Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2008/11/26/resharper-fails-to-load-with-generic/">ReSharper Fails to Load with a Generic Error</a>
+      </li>
     
   </ul>
 </section>

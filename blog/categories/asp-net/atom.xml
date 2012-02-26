@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Asp.net | Robin's development blog]]></title>
+  <link href="http://RobinClowers.github.com/blog/categories/asp-net/atom.xml" rel="self"/>
+  <link href="http://RobinClowers.github.com/"/>
+  <updated>2012-02-26T08:40:47-08:00</updated>
+  <id>http://RobinClowers.github.com/</id>
+  <author>
+    <name><![CDATA[Robin Clowers]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[IIS 7.5 Required File System Premissions]]></title>
+    <link href="http://RobinClowers.github.com/blog/2010/01/19/iis-75-required-file-system-premissions/"/>
+    <updated>2010-01-19T14:57:00-08:00</updated>
+    <id>http://RobinClowers.github.com/blog/2010/01/19/iis-75-required-file-system-premissions</id>
+    <content type="html"><![CDATA[<div class='post'>
+To host a site on IIS 7.5, you need to grant the application pool account access and to the source files. By default this is set to ApplicationPoolIdentity, which is the built in system account IIS_IUSRS.  If you don't do this, you will get the following error:<div><blockquote>HTTP Error 500.19 - Internal Server Error
+The requested page cannot be accessed because the related configuration data for the page is invalid.</blockquote></div><div>If you want to allow anonymous access to the site, you also need to grant the Anonymous user identity access to these files.  By default this is the build in system account IUSR. If you dont do this you will get this error:</div><div><blockquote>HTTP Error 401.3 - Unauthorized
+You do not have permission to view this directory or page because of the access control list (ACL) configuration or encryption settings for this resource on the Web server..</blockquote></div><div>Hopefully this saves someone else (and me!) time.</div></div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Making the ASP.NET DataGrid Usable]]></title>
+    <link href="http://RobinClowers.github.com/blog/2008/09/04/making-aspnet-datagrid-usable/"/>
+    <updated>2008-09-04T22:00:00-07:00</updated>
+    <id>http://RobinClowers.github.com/blog/2008/09/04/making-aspnet-datagrid-usable</id>
+    <content type="html"><![CDATA[<div class='post'>
+<p>If you have ever used an ASP.NET DataGrid (or GridView without a DataSource control), then you know there is a lot of boiler plate code needed.&nbsp; The project I am working on right now has a bunch of grids that need to edit, add and page over a certain data type, so I we wanted to avoid duplicating all that code across every page.&nbsp; </p> <p>A little research and a prototype later, I came up with what I call the AutoGrid.&nbsp; For the most part, it just handles the editing, paging and error handling internally.&nbsp; Arguably more interesting is the fact that it is a generic control; I was under the impression that web controls could not have type parameters.&nbsp; While this is technically true, there is a cool work around, which is detailed in a <a href="http://weblogs.asp.net/leftslipper/archive/2007/12/04/how-to-allow-generic-controls-in-asp-net-pages.aspx" target="_blank">blog post</a> by Eilon Lipton.&nbsp; </p> <p>Basically, you need create a control with generic arguments, and whatever functionality you are after. Then to create another control to second control to be used in asp.net markup. It needs to inherits from the first control and have a string property for each generic argument.&nbsp; Finally you override the ControlBuilder for your first control and construct your second control by passing the type arguments to a Type&nbsp; instance of the generic control.&nbsp; The code for the non-generic markup control is below:</p><pre class="code">[<span style="color: #2b91af">ControlBuilder</span>(<span style="color: blue">typeof</span>(<span style="color: #2b91af">GenericControlBuilder</span>))]
+<span style="color: blue">public class </span><span style="color: #2b91af">GenericGrid </span>: <span style="color: #2b91af">AutoGrid</span>&lt;<span style="color: #2b91af">Object</span>&gt;
+{
+  <span style="color: blue">private string </span>_objectType;
+
+  <span style="color: blue">public string </span>ObjectType
+  {
+      <span style="color: blue">get
+      </span>{
+          <span style="color: blue">if </span>(_objectType == <span style="color: blue">null</span>)
+          {
+              <span style="color: blue">return </span><span style="color: #2b91af">String</span>.Empty;
+          }
+          <span style="color: blue">return </span>_objectType;
+      }
+      <span style="color: blue">set
+      </span>{
+          _objectType = <span style="color: blue">value</span>;
+      }
+  }
+}</pre><pre class="code"></pre>
+<p>As you can see, it doesn't do much by itself.&nbsp; The ControlBuilder is where the magic happens (this code is straight from Eilon's example):</p><pre class="code"><span style="color: blue">public class </span><span style="color: #2b91af">GenericControlBuilder </span>: <span style="color: #2b91af">ControlBuilder
+</span>{
+  <span style="color: blue">public override void </span>Init(<span style="color: #2b91af">TemplateParser </span>parser, <span style="color: #2b91af">ControlBuilder </span>parentBuilder,
+      <span style="color: #2b91af">Type </span>type, <span style="color: blue">string </span>tagName, <span style="color: blue">string </span>id, <span style="color: #2b91af">IDictionary </span>attribs)
+  {
+<strike></strike>
+      <span style="color: #2b91af">Type </span>newType = type;
+
+      <span style="color: blue">if </span>(attribs.Contains(<span style="color: #a31515">"objecttype"</span>))
+      {
+          <span style="color: green">// If objecttype is specified, create a generic type that is bound
+          // to that argument and then hide the objecttype attribute.
+          </span><span style="color: #2b91af">Type </span>genericArg = <span style="color: #2b91af">Type</span>.GetType(
+              (<span style="color: blue">string</span>)attribs[<span style="color: #a31515">"objecttype"</span>], <span style="color: blue">true</span>, <span style="color: blue">true</span>);
+          <span style="color: #2b91af">Type </span>genericType = <span style="color: blue">typeof</span>(<span style="color: #2b91af">AutoGrid</span>&lt;&gt;);
+          newType = genericType.MakeGenericType(genericArg);
+          attribs.Remove(<span style="color: #a31515">"objecttype"</span>);
+      }
+
+      <span style="color: blue">base</span>.Init(parser, parentBuilder, newType, tagName, id, attribs);
+  }
+}</pre><pre class="code"></pre><pre class="code"><span style="font-family: georgia">The other thing that makes this work is an IoC container.  In this case I'm using <a href="http://structuremap.sourceforge.net/" target="_blank">Structure Map</a>, but any IoC would work.  The idea is that since the AutoGrid knows the type it is editing, it can ask for the appropriate data access class.  <a href="http://www.lostechies.com/blogs/chad_myers/" target="_blank">Chad Myers</a> helped me get the configuration right, using a custom TypeScanner:</span></pre><pre class="code"><span style="color: blue">public class </span><span style="color: #2b91af">RepositoryConventionScanner </span>: <span style="color: #2b91af">ITypeScanner
+</span>{
+  <span style="color: blue">public void </span>Process(<span style="color: #2b91af">Type </span>type, <span style="color: #2b91af">Registry </span>registry)
+  {
+      <span style="color: #2b91af">Type </span>repoForType = GetGenericParamFor(type.BaseType, <span style="color: blue">typeof</span>(<span style="color: #2b91af">Repository</span>&lt;&gt;));
+
+      <span style="color: blue">if </span>(repoForType != <span style="color: blue">null</span>)
+      {
+          <span style="color: blue">var </span>genType = <span style="color: blue">typeof</span>(<span style="color: #2b91af">IRepository</span>&lt;&gt;).MakeGenericType(repoForType);
+          registry
+              .ForRequestedType(genType)
+              .AddInstance(<span style="color: blue">new </span><span style="color: #2b91af">ConfiguredInstance</span>(type));
+      }
+  }
+
+  <span style="color: blue">private static </span><span style="color: #2b91af">Type </span>GetGenericParamFor(<span style="color: #2b91af">Type </span>typeToInspect, <span style="color: #2b91af">Type </span>genericType)
+  {
+      <span style="color: blue">if </span>(typeToInspect != <span style="color: blue">null
+          </span>&amp;&amp; typeToInspect.IsGenericType
+          &amp;&amp; typeToInspect.GetGenericTypeDefinition().Equals(genericType))
+      {
+          <span style="color: blue">return </span>typeToInspect.GetGenericArguments()[0];
+      }
+
+      <span style="color: blue">return null</span>;
+  }</pre><pre class="code"></pre><pre class="code"><span style="font-family: georgia">Then in your Application_Start event, just tell Structure Map to run this scanner on your assembly:</span></pre><pre class="code"><span style="color: #2b91af">StructureMapConfiguration
+  </span>.ScanAssemblies()
+  .IncludeAssemblyContainingType&lt;<span style="color: #2b91af">GenericGrid</span>&gt;()
+  .With(<span style="color: blue">new </span><span style="color: #2b91af">RepositoryConventionScanner</span>());</pre><pre class="code"></pre><pre class="code"><span style="font-family: georgia">I wrote this code for a pretty specific situation, your mileage may vary.  I would love to hear thoughts about this, if you care to see the whole solution you can get it <a href="http://www.filefactory.com/file/1fb8fa/n/AutoGridSample_zip" target="_blank">here</a>. </span></pre>  </div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Stored Procedures, a Best Practice?]]></title>
+    <link href="http://RobinClowers.github.com/blog/2008/06/09/stored-procedures-best-practice/"/>
+    <updated>2008-06-09T18:11:00-07:00</updated>
+    <id>http://RobinClowers.github.com/blog/2008/06/09/stored-procedures-best-practice</id>
+    <content type="html"><![CDATA[<div class='post'>
+<p>I just saw <a href="http://www.blogger.com/profile/05516602905783627586">merlin981</a>'s <a href="http://www.blogger.com/comment.g?blogID=4214922889450630344&amp;postID=2482102627266714910" target="_blank">comment</a> on my LINQ to SQL post, thanks for taking time to leave it!&#160; That said, I think the term &quot;Best Practice&quot; is something of a misnomer here.&#160; There has been <a href="http://weblogs.asp.net/fbouma/archive/2003/11/18/38178.aspx" target="_blank">much</a> <a href="http://weblogs.asp.net/rhoward/archive/2003/11/17/38095.aspx" target="_blank">written</a> on <a href="http://codebetter.com/blogs/eric.wise/archive/2006/05/24/145393.aspx" target="_blank">both</a>&#160;<a href="http://nhibernate.codebetter.com/blogs/jeremy.miller/archive/2005/07/06/130094.aspx">sides</a> of this debate.&#160; One thing is for sure, though, a parameterized query is compiled just like a stored procedure on SQL Sever version 7.0 and on.&#160; From <a href="http://weblogs.asp.net/fbouma/" target="_blank">Frans Bouma's blog</a>, I found this <a href="http://msdn.microsoft.com/en-us/library/aa174792.aspx" target="_blank">article</a> in the SQL Server's Books Online:</p>  <blockquote>   <p>SQL Server 2000 and SQL Server version 7.0 incorporate a number of changes to statement processing that extend many of the performance benefits of stored procedures to all SQL statements. SQL Server 2000 and SQL Server 7.0 do not save a partially compiled plan for stored procedures when they are created. A stored procedure is compiled at execution time, like any other Transact-SQL statement. SQL Server 2000 and SQL Server 7.0 retain execution plans for all SQL statements in the procedure cache, not just stored procedure execution plans. </p> </blockquote>  <p>So I think it is clear that sprocs will not be significantly faster than ad hoc SQL for simple cases.&#160; This is not to say that you should never use sprocs, on the contrary, there are situations where sprocs will be the only good solution (for instance, complex data manipulation that requires temporary tables). The point is that using an ORM can make development easier by allowing you to ignore the SQL for the majority of cases.&#160; If you see that parts of your application are slow, then you can fix that. </p>  <p>Merlin also mentioned that running queries directly against tables uses deferred execution like it is a bad thing.&#160; Deferred execution is what allows LINQ to work at all, and can improve performance in many scenarios.&#160; Of course, like any tool, it can get you into trouble if you don't understand it.</p>  </div>
+
+
+<h2>Comments</h2>
+
+
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Hi again merlin, it seems like you may be misunderstanding how Linq to Sql uses deferred execution, so I posted an <A HREF="http://robinclowers.blogspot.com/2008/06/deferred-execution-in-linq-to-sql.html" REL="nofollow">explaination</A> of it.</div>
+</div>
+<div class='comment'>
+<div class='author'>merlin981</div>
+<div class='content'>
+Thank you for the response. I concede you are correct that stored procedures are not pre-compiled in SQL Server 2000 and 2005. This is definitely an under-discussed change from previous versions.<BR/><BR/>However, I do still believe stored procedures are better, if for no other reason than security. First, for the added layer of security from SQL injection attacks. Second, from the added layer of internal security (you can grant execute permission to the IIS user for stored procedures, but deny execute/insert/delete on all other SQL commands).<BR/><BR/>Regarding deferred execution, I can see it as a good thing in a limited number of scenarios. The problem with deferred execution is that developers (especially ones new to LINQ), are accustomed to knowing that when they have a List or other IENumerable/IQueryable object, the data is already there. However, with deferred execution, the data is not "there" until you request that particular element. Also, especially with SQL, the element can change before you make the request for it.<BR/><BR/>The majority of the time, the developer wants (and probably needs) the data to be there immediately. Without properly understanding deferred execution, the developer could think that his IQueryable object is fully populated, when it is not.<BR/><BR/>There is also a performance penalty, in my opinion, for deferred execution on LINQ to SQL. The problem comes when you iterate through the list; you are constantly querying the database. Constantly requesting one row at a time can have serious consequences on a production database that services several hundred users per minute. This is another advantage of stored procedures (for LINQ to SQL), because the sproc forces the database to return all the data back to LINQ immediately. In this way, regardless of deferred execution, the developer can be assured that a) he/she has only queried the database once, and b) all the data is available and will <B>not</B> change during the iteration of the data.<BR/><BR/>Thank you for this interesting conversation, Robin. The research was fun and educational.</div>
+</div>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Linq To SQL]]></title>
+    <link href="http://RobinClowers.github.com/blog/2008/05/29/linq-to-sql/"/>
+    <updated>2008-05-29T22:22:00-07:00</updated>
+    <id>http://RobinClowers.github.com/blog/2008/05/29/linq-to-sql</id>
+    <content type="html"><![CDATA[<div class='post'>
+<p>Linq to SQL is an object relational mapper (ORM) that is included in .NET 3.5.&#160; The Linq to SQL designer allows you to create objects from you database tables simply by dragging the tables from the server explorer to the design surface.&#160; You can customize the generated types in the designer or write code in partial classes.&#160; Once you have defined your model, you can query it with Linq syntax and the SQL provider will generate the appropriate database calls for you.</p>  <p>One limitation of Linq to SQL is a given object can only be populated from one table.&#160; This means that your object will map almost one to one with your database tables.&#160; For anything but the simplest applications, you don't want to work with the database tables.&#160; For these situations, you could use Linq to SQL to populate domain objects.&#160; Keep in mind that there is a performance overhead in creating these objects as opposed to using raw ADO.NET.&#160; <a href="http://blogs.msdn.com/ricom/" target="_blank">Rico Mariani</a> has a good series of blog <a href="http://blogs.msdn.com/ricom/archive/2007/06/22/dlinq-linq-to-sql-performance-part-1.aspx" target="_blank">posts</a> about Linq to SQL performance, but I suggest profiling your application if you think it will be a problem.</p>  </div>
+
+
+<h2>Comments</h2>
+
+
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Hi merlin, thanks for your comment.  I started to refute your argument in this comment, but it turned into a whole <A HREF="http://robinclowers.blogspot.com/2008/06/stored-procedures-best-practice.html" REL="nofollow">post</A>.  If you have a minute, please check it out.</div>
+</div>
+<div class='comment'>
+<div class='author'>merlin981</div>
+<div class='content'>
+Even though the designer allows tables to be used, it is still considered best practice to use stored procedures. LINQ to SQL does highly optimize the SQL code, but it must still be compiled by the SQL Server before execution (not to mention the fact that calling on tables uses deferred execution).<BR/><BR/>Stored procedures allow the sql commands to be compiled and optimized on the SQL Server itself, which will result in faster execution. Also, sprocs can query multiple tables, databases, and servers.<BR/><BR/>Philip<BR/><A HREF="http://www.linqexchange.com" REL="nofollow">LINQ Exchange - Learn LINQ and Lambda Expressions</A></div>
+</div>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ASP.NET 2.0 Databinding, Part III]]></title>
+    <link href="http://RobinClowers.github.com/blog/2008/05/15/aspnet-20-databinding-part-iii/"/>
+    <updated>2008-05-15T20:05:00-07:00</updated>
+    <id>http://RobinClowers.github.com/blog/2008/05/15/aspnet-20-databinding-part-iii</id>
+    <content type="html"><![CDATA[<div class='post'>
+<p>In <a href="http://robinclowers.blogspot.com/2008/05/aspnet-20-databinding-part-i.html" target="_blank">part I</a>, I covered datasource controls and two way databinding.&#160; In <a href="http://robinclowers.blogspot.com/2008/05/aspnet-20-databinding-part-ii.html" target="_blank">part II</a>, I went into how to use table adapters for handling CRUD operations with two way binding.&#160; Today I want to explain when it makes sense to use these features.</p>  <p>It is important to keep in mind that any technology, feature or pattern will only be useful in a certain context.&#160; Two way databinding is a good fit for single table editing scenarios in applications that will not get heavy user loads.&#160; For more complex joined data you have to write code and it forces you into a very data centric and hard to test design.&#160; For applications that have complex editing scenarios you are often better off handling the GridView events directly.&#160; If you are designing a system with lots of business rules, you should probably using a rich domain model.&#160; I intend to write a post about using domain driven design patterns soon.&#160; </p>  <p>By the same token, there are other options for handling data presentation.&#160; Depending on you needs, you might want to consider using a commercial grid control like Telerik, Infragistics or Ext js.&#160; Many of these controls will handle updating your datasource object for you, which gives you more freedom in the design of your data access strategy.</p>  <p>If you found this series useful, saw a mistake or have any questions please let me know.&#160; I am always interested in feedback, so feel free to leave me a comment.</p>  </div>
+
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,317 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Robin's development blog</title>
+  <meta name="author" content="Robin Clowers">
+
+  
+  <meta name="description" content="In part I, I covered datasource controls and two way databinding.&#160; In part II, I went into how to use table adapters for handling CRUD &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://RobinClowers.github.com/blog/page/2">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/robinclowers/atom.xml" rel="alternate" title="Robin's development blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Robin's development blog</a></h1>
+  
+    <h2>My thoughts on software development</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/robinclowers/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:RobinClowers.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/05/15/aspnet-20-databinding-part-iii/">ASP.NET 2.0 Databinding, Part III</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-05-15T20:05:00-07:00" pubdate data-updated="true">May 15<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>In <a href="http://robinclowers.blogspot.com/2008/05/aspnet-20-databinding-part-i.html" target="_blank">part I</a>, I covered datasource controls and two way databinding.&#160; In <a href="http://robinclowers.blogspot.com/2008/05/aspnet-20-databinding-part-ii.html" target="_blank">part II</a>, I went into how to use table adapters for handling CRUD operations with two way binding.&#160; Today I want to explain when it makes sense to use these features.</p>  <p>It is important to keep in mind that any technology, feature or pattern will only be useful in a certain context.&#160; Two way databinding is a good fit for single table editing scenarios in applications that will not get heavy user loads.&#160; For more complex joined data you have to write code and it forces you into a very data centric and hard to test design.&#160; For applications that have complex editing scenarios you are often better off handling the GridView events directly.&#160; If you are designing a system with lots of business rules, you should probably using a rich domain model.&#160; I intend to write a post about using domain driven design patterns soon.&#160; </p>  <p>By the same token, there are other options for handling data presentation.&#160; Depending on you needs, you might want to consider using a commercial grid control like Telerik, Infragistics or Ext js.&#160; Many of these controls will handle updating your datasource object for you, which gives you more freedom in the design of your data access strategy.</p>  <p>If you found this series useful, saw a mistake or have any questions please let me know.&#160; I am always interested in feedback, so feel free to leave me a comment.</p>  </div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/05/05/aspnet-20-databinding-part-ii/">ASP.NET 2.0 Databinding, Part II</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-05-05T23:32:00-07:00" pubdate data-updated="true">May 5<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>In <a href="http://robinclowers.blogspot.com/2008/05/aspnet-20-databinding-part-i.html" target="_blank">part I</a>, I talked about DataSource controls and how they enable two way databinding.  <a href="http://msdn.microsoft.com/en-us/library/bz9tthwx.aspx" target="_blank">Table adapters</a> are another new feature of ASP.NET 2.0 that was designed to work with the ObjectDataSource to allow declarative databinding.  </p>  <p>What do I mean by declarative?  At a high level, declarative simply means you state what you want, not how you want it done (as opposed to imperative, where you say how something should be accomplished).  When these terms are applied to ASP.NET, it usually means aspx markup (declarative) or C# code in your code-behind classes (imperative).</p>  <p>Table adapters generate ADO.NET code, specifically SqlDataAdapters and handles all the database connections for you.  Using the designer in Visual Studio we can drag and drop tables, specify stored procedures or ad-hoc SQL and VS will generate a strongly typed DataSet based on the shape of the query, and a SqlDataAdapter for each query you add.  </p>  <p>The code that is generated by the designers are partial classes, so you can add methods and properties or handle events on the table adapters or the DataSets they return.  The usual example is adding validation logic, which is a nice idea, but implementing the validation with the ASP.NET validation controls generally provides a better user experience.  </p>  <p>The table adapter classes and the query methods they expose are decorated with attributes that tell the databinding designers they support certain operations.  You could implement your own objects that can work with two way binding that persist to a completely different database, or call a set of web services.</p>  <p>The first query you add to a table adapter defines the shape of the DataTable that is generated for you.  If this query is a single table select statements, the designer can generate the insert, update and delete methods for you, otherwise you must manually write the SQL.</p>  <p>In part III, I will put the pieces together and look at where two way databinding and table adapters are a good fit.</p></div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Amanda</div>
+<div class='content'>
+Hi Robin, Steve told me about your blog so I thought I would subscribe. I noticed you found several blogs to read already and I am still getting the hang of mine - how did you find others to connect with and where did you go to do so? I know you can browse their featured blogs, but do you know how to browse by category? The site seems a little difficult for me to navigate. -Amanda</div>
+</div>
+</div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/05/05/aspnet-20-databinding-part-i/">ASP.NET 2.0 Databinding, Part I</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-05-05T23:04:00-07:00" pubdate data-updated="true">May 5<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+<p>This is the first of a series of posts about databinding in ASP.NET 2.0.  These posts are mostly for my understanding and writing practice, but hopefully someone gets value out of them as well.  To whoever does read this, I would love to hear some feedback.</p>  <p>The features I will be talking about are covered in a <a href="http://www.asp.net/learn/data-access/" target="_blank">set of tutorials</a> by <a href="http://scottonwriting.net/" target="_blank">Scott Mitchell</a> that are much deeper and more detailed than these posts.  </p>  <p>In ASP.NET 1.1, databinding was a manual, one way operation. You set the DataSource of a UI control to a collection and call DataBind. This is great, but what about getting the data back from the UI control? You have to manually access the values from the control and write code to map the values back to some kind of object.</p>  <p>In ASP.NET 2.0, there is support for two way databinding. What do I mean by two way? When a command is issued to a bound control, it will check if the DataSource object it is bound to supports the given command. If it does, the data will be passed back to the datasource control which will handle the operation (update, insert, delete). </p>  <p>This implementation has several parts. First, all data-bound controls now have a DataSourceID property. This property should correspond the ID property of a <a href="http://msdn.microsoft.com/en-us/library/system.web.ui.datasourcecontrol.aspx" target="_blank">DataSourceControl</a> object. These controls handle calling DataBind on the control and can be configured to handle most of the command events for a bound control (Edit, Update, Cancel, Delete, and Insert). Keep in mind that although DataSourceControl objects are part of the System.Web.UI namespace, they do not render anything themselves.</p>  <p>For the datasource to work, you must at least configure it to handle fetching data. For an <a href="http://msdn.microsoft.com/en-us/library/system.web.ui.webcontrols.objectdatasource.aspx" target="_blank">ObjectDataSource</a>, this means pointing it to an instance method that it should call to fetch the data. For a <a href="http://msdn.microsoft.com/en-us/library/system.web.ui.webcontrols.sqldatasource.aspx" target="_blank">SqlDataSource</a>, you have to give it a connection string and a select statement.</p>  <p>In part II, I will show how to use an ObjectDataSource in conjunction with TableAdapters (another ASP.NET 2.0 feature), to allow CRUD operations against a SQL Server database without writing a single line of C# code.</p></div>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2008/05/01/took-plunge/">Took the Plunge</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-05-01T21:09:00-07:00" pubdate data-updated="true">May 1<span>st</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><div class='post'>
+I have been thinking about starting a blog for a while, so I am finally writing my first post.  I recently attended the alt.net open spaces in Seattle, and some conversations I had there made me decide to start a blog.
+
+A little background;   I have been a computer geek since I was a kid, but I never did any amount of programming until I started college in 2003.  I have been working as an ASP.NET developer since January 2006, and I graduated from school in the beginning of 2007.
+
+I&#8217;m not sure what the goal of this blog is yet, for the time being I am going to post problems I run into ( and hopefully resolve:-) ).  Hopefully other people will get some benefit from it as well, but if nothing else, it will be a good reference for me.</div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>jurgenappelo</div>
+<div class='content'>
+Good luck on your blog. Blogging is a lot of fun!</div>
+</div>
+<div class='comment'>
+<div class='author'>Stephen</div>
+<div class='content'>
+OMG Robin, you finally have a blog! I have been a fan of yours for such a long time! I can&#8217;t wait to read all the wonderful stuff you have to say and teach us!</div>
+</div>
+</div>
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2010/08/16/dependency-injection-patterns/">Dependency Injection Patterns</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/01/19/iis-75-required-file-system-premissions/">IIS 7.5 Required File System Premissions</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/webpart-notes/">WebPart Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/sharepoint-workflow-notes/">SharePoint Workflow Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2008/11/26/resharper-fails-to-load-with-generic/">ReSharper Fails to Load with a Generic Error</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Robin Clowers -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>ReSharper Fails to Load with a Generic Error - Robin's development blog</title>
+  <meta name="author" content="Robin Clowers">
+
+  
+  <meta name="description" content="After installing Resharper 4.1 on Windows 2003 server, I got this message when I start Visual Studio
+2008: The Add-in &#8216;JetBrains ReSharper 4.1 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://RobinClowers.github.com/blog/2008/11/26/resharper-fails-to-load-with-generic">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/robinclowers/atom.xml" rel="alternate" title="Robin's development blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Robin's development blog</a></h1>
+  
+    <h2>My thoughts on software development</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/robinclowers/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:RobinClowers.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">ReSharper Fails to Load With a Generic Error</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-11-26T19:11:00-08:00" pubdate data-updated="true">Nov 26<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><div class='post'>
+<p>After installing Resharper 4.1 on Windows 2003 server, I got this message  when I start Visual Studio
+2008: </p> <blockquote> <p>The Add-in &#8216;JetBrains ReSharper 4.1&#8217; failed to load or caused an 
+exception. </p> <p>Error Message: The system cannot find the file specified. </p> <p>Error Number: 80070002</p></blockquote> <p>I emailed JetBrains support and got a quick response.  It turns out my system  did not have Extensibility.dll installed in the GAC (Global Assembly Cache), and  ReSharper requires this dll to run.  </p> <p>To figure this out, I opened explorer to the path &#8220;%windir%\assembly&#8221;, which  brings up a shell extension that displays the contents of your GAC.</p> <p>The fix was easy, I just had to find the dll, which is installed with Visual  Studio.  Once I knew the location, I opened the Visual Studio command prompt and  ran </p> <blockquote> <p>gacutil /i  &#8221;C:\Program Files\Common Files\Microsoft  Shared\MSENV\PublicAssemblies&#8221;</p></blockquote> <p>Hopefully this saves someone else some time.</p></div>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robin Clowers</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-11-26T19:11:00-08:00" pubdate data-updated="true">Nov 26<span>th</span>, 2008</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/resharper/'>ReSharper</a>, <a class='category' href='/blog/categories/visual-studio/'>Visual Studio</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://RobinClowers.github.com/blog/2008/11/26/resharper-fails-to-load-with-generic/" data-via="" data-counturl="http://RobinClowers.github.com/blog/2008/11/26/resharper-fails-to-load-with-generic/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2008/09/04/making-aspnet-datagrid-usable/" title="Previous Post: Making the ASP.NET DataGrid Usable">&laquo; Making the ASP.NET DataGrid Usable</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2009/08/19/sharepoint-workflow-notes/" title="Next Post: SharePoint Workflow Notes">SharePoint Workflow Notes &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2010/08/16/dependency-injection-patterns/">Dependency Injection Patterns</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/01/19/iis-75-required-file-system-premissions/">IIS 7.5 Required File System Premissions</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/webpart-notes/">WebPart Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/sharepoint-workflow-notes/">SharePoint Workflow Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2008/11/26/resharper-fails-to-load-with-generic/">ReSharper Fails to Load with a Generic Error</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Robin Clowers -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

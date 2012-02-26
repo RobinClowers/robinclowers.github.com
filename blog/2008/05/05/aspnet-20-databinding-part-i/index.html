@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>ASP.NET 2.0 Databinding, Part I - Robin's development blog</title>
+  <meta name="author" content="Robin Clowers">
+
+  
+  <meta name="description" content="This is the first of a series of posts about databinding in ASP.NET 2.0. These posts are mostly for my understanding and writing practice, but &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://RobinClowers.github.com/blog/2008/05/05/aspnet-20-databinding-part-i">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/robinclowers/atom.xml" rel="alternate" title="Robin's development blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Robin's development blog</a></h1>
+  
+    <h2>My thoughts on software development</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/robinclowers/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:RobinClowers.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">ASP.NET 2.0 Databinding, Part I</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-05-05T23:04:00-07:00" pubdate data-updated="true">May 5<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><div class='post'>
+<p>This is the first of a series of posts about databinding in ASP.NET 2.0.  These posts are mostly for my understanding and writing practice, but hopefully someone gets value out of them as well.  To whoever does read this, I would love to hear some feedback.</p>  <p>The features I will be talking about are covered in a <a href="http://www.asp.net/learn/data-access/" target="_blank">set of tutorials</a> by <a href="http://scottonwriting.net/" target="_blank">Scott Mitchell</a> that are much deeper and more detailed than these posts.  </p>  <p>In ASP.NET 1.1, databinding was a manual, one way operation. You set the DataSource of a UI control to a collection and call DataBind. This is great, but what about getting the data back from the UI control? You have to manually access the values from the control and write code to map the values back to some kind of object.</p>  <p>In ASP.NET 2.0, there is support for two way databinding. What do I mean by two way? When a command is issued to a bound control, it will check if the DataSource object it is bound to supports the given command. If it does, the data will be passed back to the datasource control which will handle the operation (update, insert, delete). </p>  <p>This implementation has several parts. First, all data-bound controls now have a DataSourceID property. This property should correspond the ID property of a <a href="http://msdn.microsoft.com/en-us/library/system.web.ui.datasourcecontrol.aspx" target="_blank">DataSourceControl</a> object. These controls handle calling DataBind on the control and can be configured to handle most of the command events for a bound control (Edit, Update, Cancel, Delete, and Insert). Keep in mind that although DataSourceControl objects are part of the System.Web.UI namespace, they do not render anything themselves.</p>  <p>For the datasource to work, you must at least configure it to handle fetching data. For an <a href="http://msdn.microsoft.com/en-us/library/system.web.ui.webcontrols.objectdatasource.aspx" target="_blank">ObjectDataSource</a>, this means pointing it to an instance method that it should call to fetch the data. For a <a href="http://msdn.microsoft.com/en-us/library/system.web.ui.webcontrols.sqldatasource.aspx" target="_blank">SqlDataSource</a>, you have to give it a connection string and a select statement.</p>  <p>In part II, I will show how to use an ObjectDataSource in conjunction with TableAdapters (another ASP.NET 2.0 feature), to allow CRUD operations against a SQL Server database without writing a single line of C# code.</p></div>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robin Clowers</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-05-05T23:04:00-07:00" pubdate data-updated="true">May 5<span>th</span>, 2008</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/asp-net/'>Asp.net</a>, <a class='category' href='/blog/categories/databinding/'>Databinding</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://RobinClowers.github.com/blog/2008/05/05/aspnet-20-databinding-part-i/" data-via="" data-counturl="http://RobinClowers.github.com/blog/2008/05/05/aspnet-20-databinding-part-i/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2008/05/01/took-plunge/" title="Previous Post: Took the Plunge">&laquo; Took the Plunge</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2008/05/05/aspnet-20-databinding-part-ii/" title="Next Post: ASP.NET 2.0 Databinding, Part II">ASP.NET 2.0 Databinding, Part II &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2010/08/16/dependency-injection-patterns/">Dependency Injection Patterns</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/01/19/iis-75-required-file-system-premissions/">IIS 7.5 Required File System Premissions</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/webpart-notes/">WebPart Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/sharepoint-workflow-notes/">SharePoint Workflow Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2008/11/26/resharper-fails-to-load-with-generic/">ReSharper Fails to Load with a Generic Error</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Robin Clowers -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

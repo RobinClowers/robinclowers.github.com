@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Linq To SQL - Robin's development blog</title>
+  <meta name="author" content="Robin Clowers">
+
+  
+  <meta name="description" content="Linq to SQL is an object relational mapper (ORM) that is included in .NET 3.5.&#160; The Linq to SQL designer allows you to create objects from you &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://RobinClowers.github.com/blog/2008/05/29/linq-to-sql">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/robinclowers/atom.xml" rel="alternate" title="Robin's development blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Robin's development blog</a></h1>
+  
+    <h2>My thoughts on software development</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/robinclowers/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:RobinClowers.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Linq to SQL</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-05-29T22:22:00-07:00" pubdate data-updated="true">May 29<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><div class='post'>
+<p>Linq to SQL is an object relational mapper (ORM) that is included in .NET 3.5.&#160; The Linq to SQL designer allows you to create objects from you database tables simply by dragging the tables from the server explorer to the design surface.&#160; You can customize the generated types in the designer or write code in partial classes.&#160; Once you have defined your model, you can query it with Linq syntax and the SQL provider will generate the appropriate database calls for you.</p>  <p>One limitation of Linq to SQL is a given object can only be populated from one table.&#160; This means that your object will map almost one to one with your database tables.&#160; For anything but the simplest applications, you don&#8217;t want to work with the database tables.&#160; For these situations, you could use Linq to SQL to populate domain objects.&#160; Keep in mind that there is a performance overhead in creating these objects as opposed to using raw ADO.NET.&#160; <a href="http://blogs.msdn.com/ricom/" target="_blank">Rico Mariani</a> has a good series of blog <a href="http://blogs.msdn.com/ricom/archive/2007/06/22/dlinq-linq-to-sql-performance-part-1.aspx" target="_blank">posts</a> about Linq to SQL performance, but I suggest profiling your application if you think it will be a problem.</p>  </div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Hi merlin, thanks for your comment.  I started to refute your argument in this comment, but it turned into a whole <A HREF="http://robinclowers.blogspot.com/2008/06/stored-procedures-best-practice.html" REL="nofollow">post</A>.  If you have a minute, please check it out.</div>
+</div>
+<div class='comment'>
+<div class='author'>merlin981</div>
+<div class='content'>
+Even though the designer allows tables to be used, it is still considered best practice to use stored procedures. LINQ to SQL does highly optimize the SQL code, but it must still be compiled by the SQL Server before execution (not to mention the fact that calling on tables uses deferred execution).<BR/><BR/>Stored procedures allow the sql commands to be compiled and optimized on the SQL Server itself, which will result in faster execution. Also, sprocs can query multiple tables, databases, and servers.<BR/><BR/>Philip<BR/><A HREF="http://www.linqexchange.com" REL="nofollow">LINQ Exchange - Learn LINQ and Lambda Expressions</A></div>
+</div>
+</div>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robin Clowers</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-05-29T22:22:00-07:00" pubdate data-updated="true">May 29<span>th</span>, 2008</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/asp-net/'>Asp.net</a>, <a class='category' href='/blog/categories/linq/'>Linq</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://RobinClowers.github.com/blog/2008/05/29/linq-to-sql/" data-via="" data-counturl="http://RobinClowers.github.com/blog/2008/05/29/linq-to-sql/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2008/05/15/aspnet-20-databinding-part-iii/" title="Previous Post: ASP.NET 2.0 Databinding, Part III">&laquo; ASP.NET 2.0 Databinding, Part III</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2008/06/09/stored-procedures-best-practice/" title="Next Post: Stored Procedures, a Best Practice?">Stored Procedures, a Best Practice? &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2010/08/16/dependency-injection-patterns/">Dependency Injection Patterns</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/01/19/iis-75-required-file-system-premissions/">IIS 7.5 Required File System Premissions</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/webpart-notes/">WebPart Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/sharepoint-workflow-notes/">SharePoint Workflow Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2008/11/26/resharper-fails-to-load-with-generic/">ReSharper Fails to Load with a Generic Error</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Robin Clowers -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

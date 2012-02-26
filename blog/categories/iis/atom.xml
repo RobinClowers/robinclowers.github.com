@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: IIS | Robin's development blog]]></title>
+  <link href="http://RobinClowers.github.com/blog/categories/iis/atom.xml" rel="self"/>
+  <link href="http://RobinClowers.github.com/"/>
+  <updated>2012-02-26T08:40:47-08:00</updated>
+  <id>http://RobinClowers.github.com/</id>
+  <author>
+    <name><![CDATA[Robin Clowers]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[IIS 7.5 Required File System Premissions]]></title>
+    <link href="http://RobinClowers.github.com/blog/2010/01/19/iis-75-required-file-system-premissions/"/>
+    <updated>2010-01-19T14:57:00-08:00</updated>
+    <id>http://RobinClowers.github.com/blog/2010/01/19/iis-75-required-file-system-premissions</id>
+    <content type="html"><![CDATA[<div class='post'>
+To host a site on IIS 7.5, you need to grant the application pool account access and to the source files. By default this is set to ApplicationPoolIdentity, which is the built in system account IIS_IUSRS.  If you don't do this, you will get the following error:<div><blockquote>HTTP Error 500.19 - Internal Server Error
+The requested page cannot be accessed because the related configuration data for the page is invalid.</blockquote></div><div>If you want to allow anonymous access to the site, you also need to grant the Anonymous user identity access to these files.  By default this is the build in system account IUSR. If you dont do this you will get this error:</div><div><blockquote>HTTP Error 401.3 - Unauthorized
+You do not have permission to view this directory or page because of the access control list (ACL) configuration or encryption settings for this resource on the Web server..</blockquote></div><div>Hopefully this saves someone else (and me!) time.</div></div>
+
+]]></content>
+  </entry>
+  
+</feed>

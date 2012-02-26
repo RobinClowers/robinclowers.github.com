@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Deferred Execution in Linq to SQL - Robin's development blog</title>
+  <meta name="author" content="Robin Clowers">
+
+  
+  <meta name="description" content="Just like the last post, this one is motivated by a comment I got from someone identified as merlin981. Since we seem to have a running dialog, do &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://RobinClowers.github.com/blog/2008/06/18/deferred-execution-in-linq-to-sql">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/robinclowers/atom.xml" rel="alternate" title="Robin's development blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Robin's development blog</a></h1>
+  
+    <h2>My thoughts on software development</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/robinclowers/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:RobinClowers.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Deferred Execution in Linq to SQL</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-06-18T18:14:00-07:00" pubdate data-updated="true">Jun 18<span>th</span>, 2008</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><div class='post'>
+<p>Just like the last post, this one is motivated by a <a href="https://www.blogger.com/comment.g?blogID=4214922889450630344&amp;postID=892965719237419004" target="_blank">comment</a> I got from someone identified as merlin981. Since we seem to have a running dialog, do you have a blog or other online presence? In any case, I wanted to explain my understanding of how Linq to SQL uses deferred execution because merlin and I seemed to have a very different ideas. </p>  <p>Let&#8217;s take a look at a simple query like the one below.</p><pre class="code"><span style="color:blue;">var </span>dbContext = <span style="color:blue;">new </span><span style="color: rgb(43, 145, 175);">TestDataContext</span>();
+<span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select </span>x;</pre>At this point, the query is just and expression tree. When you iterate over the the results, the following single query executes against the database:
+<pre>SELECT [t0].[Id], [t0].[Name], [t0].[Price], [t0].[CategoryId]
+FROM [dbo].[Product] AS [t0]</pre>At this point, I can access the Id, Name and CategoryId of all the products that were in the the database without any other connections to the database. On the other hand, if you were to do something like this:
+<pre class="code"><span style="color:blue;">foreach </span>(<span style="color:blue;">var </span>product <span style="color:blue;">in </span>result)
+{
+  Response.Write(product.Category.Name);
+}</pre><p>This block of code is going to hit the database once for each product. Obviously we want to avoid that, and there are several ways to do so. One is to return an anonymous type containing just the columns we need:</p><pre class="code"><span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select new
+         </span>{
+             x.Name,
+             CategoryName = x.Category.Name
+         };
+
+<span style="color:blue;">foreach </span>(<span style="color:blue;">var </span>product <span style="color:blue;">in </span>result)
+{
+    Response.Write(product.CategoryName);
+}</pre><p></p><p></p>This method will do an inner join and pull back just the columns we asked for. Another way is to specify load options for our original query:
+
+<pre class="code"><span style="color:blue;">var </span>dbContext = <span style="color:blue;">new </span><span style="color: rgb(43, 145, 175);">TestDataContext</span>();
+dbContext.LoadOptions.LoadWith&lt;<span style="color: rgb(43, 145, 175);">Product</span>&gt;(p =&gt; p.Category);
+<span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select </span>x;</pre><p>This tells the Linq to SQL Execution engine to load all the fields in the Category entity for each product. The generated SQL is below.</p><pre>SELECT [t0].[Id], [t0].[Name], [t0].[Price], [t0].[CategoryId], [t1].[Name] AS [Name2]
+FROM [dbo].[Product] AS [t0]
+INNER JOIN [dbo].[Category] AS [t1] ON [t1].[Id] = [t0].[CategoryId]</pre><p>I hope this has been a helpful example of how Linq To SQL uses deferred execution.
+</p></div>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robin Clowers</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2008-06-18T18:14:00-07:00" pubdate data-updated="true">Jun 18<span>th</span>, 2008</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/linq/'>Linq</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://RobinClowers.github.com/blog/2008/06/18/deferred-execution-in-linq-to-sql/" data-via="" data-counturl="http://RobinClowers.github.com/blog/2008/06/18/deferred-execution-in-linq-to-sql/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2008/06/09/stored-procedures-best-practice/" title="Previous Post: Stored Procedures, a Best Practice?">&laquo; Stored Procedures, a Best Practice?</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2008/06/25/linq-to-sql-caching/" title="Next Post: Linq To SQL Caching">Linq To SQL Caching &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2010/08/16/dependency-injection-patterns/">Dependency Injection Patterns</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/01/19/iis-75-required-file-system-premissions/">IIS 7.5 Required File System Premissions</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/webpart-notes/">WebPart Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/08/19/sharepoint-workflow-notes/">SharePoint Workflow Notes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2008/11/26/resharper-fails-to-load-with-generic/">ReSharper Fails to Load with a Generic Error</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - Robin Clowers -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
