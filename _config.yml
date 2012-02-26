@@ -3,9 +3,9 @@
 # ----------------------- #
 
 url: http://RobinClowers.github.com
-title: My Octopress Blog
-subtitle: A blogging framework for hackers.
-author: Your Name
+title: Robin's development blog
+subtitle: My thoughts on software development
+author: Robin Clowers
 simple_search: http://google.com/search
 description:
 
@@ -26,7 +26,7 @@ email:
 # ----------------------- #
 
 # If publishing to a subdirectory as in http://site.com/project set 'root: /project'
-root: /robinclowers
+root: /
 permalink: /blog/:year/:month/:day/:title/
 source: source
 destination: public/robinclowers
