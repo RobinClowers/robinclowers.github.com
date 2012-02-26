@@ -1,0 +1,25 @@
+---
+layout: post
+title: "Linq To SQL"
+date: 2008-05-29T22:22:00-07:00
+comments: false
+categories:
+ - Asp.net
+ - Linq
+---
+
+<div class='post'>
+<p>Linq to SQL is an object relational mapper (ORM) that is included in .NET 3.5.&#160; The Linq to SQL designer allows you to create objects from you database tables simply by dragging the tables from the server explorer to the design surface.&#160; You can customize the generated types in the designer or write code in partial classes.&#160; Once you have defined your model, you can query it with Linq syntax and the SQL provider will generate the appropriate database calls for you.</p>  <p>One limitation of Linq to SQL is a given object can only be populated from one table.&#160; This means that your object will map almost one to one with your database tables.&#160; For anything but the simplest applications, you don't want to work with the database tables.&#160; For these situations, you could use Linq to SQL to populate domain objects.&#160; Keep in mind that there is a performance overhead in creating these objects as opposed to using raw ADO.NET.&#160; <a href="http://blogs.msdn.com/ricom/" target="_blank">Rico Mariani</a> has a good series of blog <a href="http://blogs.msdn.com/ricom/archive/2007/06/22/dlinq-linq-to-sql-performance-part-1.aspx" target="_blank">posts</a> about Linq to SQL performance, but I suggest profiling your application if you think it will be a problem.</p>  </div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Hi merlin, thanks for your comment.  I started to refute your argument in this comment, but it turned into a whole <A HREF="http://robinclowers.blogspot.com/2008/06/stored-procedures-best-practice.html" REL="nofollow">post</A>.  If you have a minute, please check it out.</div>
+</div>
+<div class='comment'>
+<div class='author'>merlin981</div>
+<div class='content'>
+Even though the designer allows tables to be used, it is still considered best practice to use stored procedures. LINQ to SQL does highly optimize the SQL code, but it must still be compiled by the SQL Server before execution (not to mention the fact that calling on tables uses deferred execution).<BR/><BR/>Stored procedures allow the sql commands to be compiled and optimized on the SQL Server itself, which will result in faster execution. Also, sprocs can query multiple tables, databases, and servers.<BR/><BR/>Philip<BR/><A HREF="http://www.linqexchange.com" REL="nofollow">LINQ Exchange - Learn LINQ and Lambda Expressions</A></div>
+</div>
+</div>

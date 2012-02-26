@@ -1,0 +1,12 @@
+---
+layout: post
+title: "WebPart Notes"
+date: 2009-08-19T11:20:00-07:00
+comments: false
+categories:
+ - SharePoint
+---
+
+<div class='post'>
+Here are some notes from building a SharePoint web part.
+<ul><li>It seems when you deploy a feature containing web parts, you still have to add it to the web part gallery for each site. </li><li>If you want to reference controls in the CONTROLTEMPLATES directory, you can use the virtual path ~/_controltemplates.</li><li>If your controls have a code behind that is strong named, you must fully qualify the Inherits attribute of the @Control directive. </li><li>To remove broken webparts from a page, add the query string ?contents=1 to the URL. (Via <a href="http://sharepointinsight.blogspot.com/2008/06/remove-bad-or-broken-web-parts-from.html">http://sharepointinsight.blogspot.com/2008/06/remove-bad-or-broken-web-parts-from.html</a>) </li><li>To disable friendly error messages (and see the yellow screen of death) </li><ul><li>set the CallStack attribute of the SafeMode node to true </li><li>set CustomErrors mode attribute to Off </li><li>set debug attribute of the Compilation node to true </li></ul></ul></div>

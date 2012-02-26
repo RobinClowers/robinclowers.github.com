@@ -1,0 +1,25 @@
+---
+layout: post
+title: "Linq To SQL Caching"
+date: 2008-06-25T20:55:00-07:00
+comments: false
+categories:
+ - Databinding
+ - Linq
+---
+
+<div class='post'>
+<p>I ran into a weird behavior while trying out different usage patterns of Linq To SQL.  I noticed that some queries were not hitting the database!  Now I knew that Linq To SQL object tracking keeps cached copies of entities it retrieves, but my understanding was that it only used this for identity mapping and would never return stale results.  After some Googling and then looking at the internals of the System.Data.Linq.Table class with Reflector, I came to the conclusion that it was indeed returning its cached results.    This makes sense once you understand the way the data context works; I didn't realize the implications of object tracking.  Once an object has been retrieved once by a data context, its values will not be updated by the database.  This is key for the way optimistic concurrency support works in Linq to SQL, but if you are used to writing simple crud applications where you ignore concurrency it would be easy to overlook this.  </p>  <p>On thing still puzzles me though, if I change my call from</p>  <pre class="code">context.Products;</pre><p> to </p><pre class="code">context.Products.ToList();</pre><p>I would always hit the database.  It turns out that ToList calls GetEnumerator (which leads to a query being fired) whereas when I databind directly against the Table, it calls IListSource.GetList, which will return the cached table if it can.  Why wouldn't you query the database to check for new objects that might have been added to your results, and why couldn't the same query use the cache when I call ToList on it?</p></div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>Robin Clowers</div>
+<div class='content'>
+Thanks for the comment Will!  I agree that using ToList is the most intuitive way to solve this, but it definitely acheives the desired effect.  Bindable LINQ looks really interesting, I have not tried using LINQ in a connected scenario, so I was unaware of those issues.</div>
+</div>
+<div class='comment'>
+<div class='author'>Will Hughes</div>
+<div class='content'>
+I've had a bunch of weirdness with LINQ caching - although most of mine have been around stored procs. <BR/><BR/>The .ToList() method, whilst crude, seems to be a good way to bypass a raft of issues. <BR/><BR/>The main drawback I found is that  unless you're using something like <A HREF="http://www.codeplex.com/bindablelinq" REL="nofollow">Bindable LINQ</A> you've just broken any eventing notifications right there should you subsequently update rows.  <BR/><BR/>Obviously it's not that important for ASP.NET and other backend services, but is more important for WinForms/Silverlight/WPF.</div>
+</div>
+</div>

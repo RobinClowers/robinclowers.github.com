@@ -1,0 +1,14 @@
+---
+layout: post
+title: "ReSharper Fails to Load with a Generic Error"
+date: 2008-11-26T19:11:00-08:00
+comments: false
+categories:
+ - ReSharper
+ - Visual Studio
+---
+
+<div class='post'>
+<p>After installing Resharper 4.1 on Windows 2003 server, I got this message  when I start Visual Studio
+2008: </p> <blockquote> <p>The Add-in 'JetBrains ReSharper 4.1' failed to load or caused an 
+exception. </p> <p>Error Message: The system cannot find the file specified. </p> <p>Error Number: 80070002</p></blockquote> <p>I emailed JetBrains support and got a quick response.  It turns out my system  did not have Extensibility.dll installed in the GAC (Global Assembly Cache), and  ReSharper requires this dll to run.  </p> <p>To figure this out, I opened explorer to the path "%windir%\assembly", which  brings up a shell extension that displays the contents of your GAC.</p> <p>The fix was easy, I just had to find the dll, which is installed with Visual  Studio.  Once I knew the location, I opened the Visual Studio command prompt and  ran </p> <blockquote> <p>gacutil /i  "C:\Program Files\Common Files\Microsoft  Shared\MSENV\PublicAssemblies"</p></blockquote> <p>Hopefully this saves someone else some time.</p></div>

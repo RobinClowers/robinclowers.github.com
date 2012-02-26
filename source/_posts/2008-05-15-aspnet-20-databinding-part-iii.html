@@ -1,0 +1,13 @@
+---
+layout: post
+title: "ASP.NET 2.0 Databinding, Part III"
+date: 2008-05-15T20:05:00-07:00
+comments: false
+categories:
+ - Software Development
+ - Databinding
+ - Asp.net
+---
+
+<div class='post'>
+<p>In <a href="http://robinclowers.blogspot.com/2008/05/aspnet-20-databinding-part-i.html" target="_blank">part I</a>, I covered datasource controls and two way databinding.&#160; In <a href="http://robinclowers.blogspot.com/2008/05/aspnet-20-databinding-part-ii.html" target="_blank">part II</a>, I went into how to use table adapters for handling CRUD operations with two way binding.&#160; Today I want to explain when it makes sense to use these features.</p>  <p>It is important to keep in mind that any technology, feature or pattern will only be useful in a certain context.&#160; Two way databinding is a good fit for single table editing scenarios in applications that will not get heavy user loads.&#160; For more complex joined data you have to write code and it forces you into a very data centric and hard to test design.&#160; For applications that have complex editing scenarios you are often better off handling the GridView events directly.&#160; If you are designing a system with lots of business rules, you should probably using a rich domain model.&#160; I intend to write a post about using domain driven design patterns soon.&#160; </p>  <p>By the same token, there are other options for handling data presentation.&#160; Depending on you needs, you might want to consider using a commercial grid control like Telerik, Infragistics or Ext js.&#160; Many of these controls will handle updating your datasource object for you, which gives you more freedom in the design of your data access strategy.</p>  <p>If you found this series useful, saw a mistake or have any questions please let me know.&#160; I am always interested in feedback, so feel free to leave me a comment.</p>  </div>

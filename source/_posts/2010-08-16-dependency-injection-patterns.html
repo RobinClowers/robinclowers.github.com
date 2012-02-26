@@ -1,0 +1,59 @@
+---
+layout: post
+title: "Dependency Injection Patterns"
+date: 2010-08-16T18:05:00-07:00
+comments: false
+categories:
+ - IoC
+---
+
+<div class='post'>
+<p>I had a twitter conversation a while back with <a href="http://paulhammant.com/" target="_blank">Paul Hammant</a> about different ways to use a IoC container.  Paul is one of the leads on PicoContainer, one of the Java containers.  It all started with him coming across the <a href="http://commonservicelocator.codeplex.com/" target="_blank">Common Service Locator</a>, which is an adapter to allow frameworks to leverage a container without forcing consumers to use a specific one.  He had a big problem with one part of the implementation, the <a href="http://commonservicelocator.codeplex.com/SourceControl/changeset/view/63489#332683" target="_blank">ServiceLocator</a> class.  This class is a static gateway to the container, and he pointed out this is the antithesis of dependency injection and inversion of control.  While this is true, there has to be at least one place (usual a few places) in your application that gets access to the container to inject everything else.  </p>  <p>In asp.net, this is usually achieved  by storing your container in the ApplicationState dictionary, and then accessing it where it is needed.  This pattern ends up being recreated in every application that uses a container, so container authors hid this functionality behind a static gateway.  Is this a bad thing?  If used as intended, I don’t see much real difference between using a global dictionary and using a static gateway (in fact, you could argue that the gateway is cleaner).  Paul’s point; however, was that giving developers access to this static gateway will lead to it being used all sorts of places it shouldn’t.  In practice, I have seen applications where is happens to some extent, but in many cases it has more to do with the lack of DI support in asp.net.</p>  <p>Paul proposed a way to control access to the container using packages in java.  I came up with something similar in .net, although I had to use a separate assembly to enforce separation.  For asp.net mvc, it boils down to putting your controller factory and other extension points in their own assembly, and wrapping the container to make the various resolution methods internal.  That way, they can only be used in this infrastructure assembly.  I am not crazy about having to wrap the container, but it’s not that much code:</p>
+<pre class="brush: csharp;">public class ContainerWrapper
+{
+ public const string ContainerKey = "Container";
+ Container container;
+
+ public void InitializeContainer()
+ {
+     container = new Container();
+     container.Configure(c =&gt; c.Scan(s =&gt;
+     {
+         s.WithDefaultConventions();
+         s.AddAllTypesOf&lt;IController&gt;();
+     }));
+
+     HttpContext.Current.Application[ContainerKey] = this;
+ }
+
+ internal object GetInstance(Type type)
+ {
+     return container.GetInstance(type);
+ }
+
+ internal T GetInstance&lt;T&gt;()
+ {
+     return container.GetInstance&lt;T&gt;();
+ }
+}</pre>
+<p>This is example uses StructureMap, and is very simplistic.  In a real application you would probably want to scan for registries that would contain the registration logic (those would be in you main web assembly).  The ControllerFactory looks this:</p>
+<pre class="brush: csharp;">public class StructureMapControllerFactory : DefaultControllerFactory
+{
+ protected override IController GetControllerInstance(
+     RequestContext requestContext, Type controllerType)
+ {
+     var application = requestContext.HttpContext.Application;
+     var container = (ContainerWrapper)application[ContainerWrapper.ContainerKey];
+     return container.GetInstance(controllerType) as IController;
+ }
+}</pre>
+<p>A complete sample project showing this off is on <a href="http://github.com/RobinClowers/Samples/tree/master/DependencyInjectionDemoMvc/">Github</a>.</p><p>So I’m curious about two things.  First, in your experience, do developers abuse service locators when they could be using dependency injection?  Second, would it help to hide the container in an infrastructure assembly, only exposing a the registration and base classes that access the container internally?</p><p>
+</p></div>
+<h2>Comments</h2>
+<div class='comments'>
+<div class='comment'>
+<div class='author'>kneebar100</div>
+<div class='content'>
+seem like an artificial boundary....what are you getting out of having a separate assembly?<br /><br />Wouldn&#39;t you lose ability to configure the container more easily?</div>
+</div>
+</div>

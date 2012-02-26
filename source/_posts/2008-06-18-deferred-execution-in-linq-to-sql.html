@@ -1,0 +1,37 @@
+---
+layout: post
+title: "Deferred Execution in Linq to SQL"
+date: 2008-06-18T18:14:00-07:00
+comments: false
+categories:
+ - Linq
+---
+
+<div class='post'>
+<p>Just like the last post, this one is motivated by a <a href="https://www.blogger.com/comment.g?blogID=4214922889450630344&amp;postID=892965719237419004" target="_blank">comment</a> I got from someone identified as merlin981. Since we seem to have a running dialog, do you have a blog or other online presence? In any case, I wanted to explain my understanding of how Linq to SQL uses deferred execution because merlin and I seemed to have a very different ideas. </p>  <p>Let's take a look at a simple query like the one below.</p><pre class="code"><span style="color:blue;">var </span>dbContext = <span style="color:blue;">new </span><span style="color: rgb(43, 145, 175);">TestDataContext</span>();
+<span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select </span>x;</pre>At this point, the query is just and expression tree. When you iterate over the the results, the following single query executes against the database:
+<pre>SELECT [t0].[Id], [t0].[Name], [t0].[Price], [t0].[CategoryId]
+FROM [dbo].[Product] AS [t0]</pre>At this point, I can access the Id, Name and CategoryId of all the products that were in the the database without any other connections to the database. On the other hand, if you were to do something like this:
+<pre class="code"><span style="color:blue;">foreach </span>(<span style="color:blue;">var </span>product <span style="color:blue;">in </span>result)
+{
+  Response.Write(product.Category.Name);
+}</pre><p>This block of code is going to hit the database once for each product. Obviously we want to avoid that, and there are several ways to do so. One is to return an anonymous type containing just the columns we need:</p><pre class="code"><span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select new
+         </span>{
+             x.Name,
+             CategoryName = x.Category.Name
+         };
+
+<span style="color:blue;">foreach </span>(<span style="color:blue;">var </span>product <span style="color:blue;">in </span>result)
+{
+    Response.Write(product.CategoryName);
+}</pre><p></p><p></p>This method will do an inner join and pull back just the columns we asked for. Another way is to specify load options for our original query:
+
+<pre class="code"><span style="color:blue;">var </span>dbContext = <span style="color:blue;">new </span><span style="color: rgb(43, 145, 175);">TestDataContext</span>();
+dbContext.LoadOptions.LoadWith&lt;<span style="color: rgb(43, 145, 175);">Product</span>&gt;(p =&gt; p.Category);
+<span style="color:blue;">var </span>result = <span style="color:blue;">from </span>x <span style="color:blue;">in </span>dbContext.Products
+         <span style="color:blue;">select </span>x;</pre><p>This tells the Linq to SQL Execution engine to load all the fields in the Category entity for each product. The generated SQL is below.</p><pre>SELECT [t0].[Id], [t0].[Name], [t0].[Price], [t0].[CategoryId], [t1].[Name] AS [Name2]
+FROM [dbo].[Product] AS [t0]
+INNER JOIN [dbo].[Category] AS [t1] ON [t1].[Id] = [t0].[CategoryId]</pre><p>I hope this has been a helpful example of how Linq To SQL uses deferred execution.
+</p></div>

@@ -1,0 +1,83 @@
+---
+layout: post
+title: "Making the ASP.NET DataGrid Usable"
+date: 2008-09-04T22:00:00-07:00
+comments: false
+categories:
+ - Software Development
+ - Databinding
+ - Asp.net
+---
+
+<div class='post'>
+<p>If you have ever used an ASP.NET DataGrid (or GridView without a DataSource control), then you know there is a lot of boiler plate code needed.&nbsp; The project I am working on right now has a bunch of grids that need to edit, add and page over a certain data type, so I we wanted to avoid duplicating all that code across every page.&nbsp; </p> <p>A little research and a prototype later, I came up with what I call the AutoGrid.&nbsp; For the most part, it just handles the editing, paging and error handling internally.&nbsp; Arguably more interesting is the fact that it is a generic control; I was under the impression that web controls could not have type parameters.&nbsp; While this is technically true, there is a cool work around, which is detailed in a <a href="http://weblogs.asp.net/leftslipper/archive/2007/12/04/how-to-allow-generic-controls-in-asp-net-pages.aspx" target="_blank">blog post</a> by Eilon Lipton.&nbsp; </p> <p>Basically, you need create a control with generic arguments, and whatever functionality you are after. Then to create another control to second control to be used in asp.net markup. It needs to inherits from the first control and have a string property for each generic argument.&nbsp; Finally you override the ControlBuilder for your first control and construct your second control by passing the type arguments to a Type&nbsp; instance of the generic control.&nbsp; The code for the non-generic markup control is below:</p><pre class="code">[<span style="color: #2b91af">ControlBuilder</span>(<span style="color: blue">typeof</span>(<span style="color: #2b91af">GenericControlBuilder</span>))]
+<span style="color: blue">public class </span><span style="color: #2b91af">GenericGrid </span>: <span style="color: #2b91af">AutoGrid</span>&lt;<span style="color: #2b91af">Object</span>&gt;
+{
+  <span style="color: blue">private string </span>_objectType;
+
+  <span style="color: blue">public string </span>ObjectType
+  {
+      <span style="color: blue">get
+      </span>{
+          <span style="color: blue">if </span>(_objectType == <span style="color: blue">null</span>)
+          {
+              <span style="color: blue">return </span><span style="color: #2b91af">String</span>.Empty;
+          }
+          <span style="color: blue">return </span>_objectType;
+      }
+      <span style="color: blue">set
+      </span>{
+          _objectType = <span style="color: blue">value</span>;
+      }
+  }
+}</pre><pre class="code"></pre>
+<p>As you can see, it doesn't do much by itself.&nbsp; The ControlBuilder is where the magic happens (this code is straight from Eilon's example):</p><pre class="code"><span style="color: blue">public class </span><span style="color: #2b91af">GenericControlBuilder </span>: <span style="color: #2b91af">ControlBuilder
+</span>{
+  <span style="color: blue">public override void </span>Init(<span style="color: #2b91af">TemplateParser </span>parser, <span style="color: #2b91af">ControlBuilder </span>parentBuilder,
+      <span style="color: #2b91af">Type </span>type, <span style="color: blue">string </span>tagName, <span style="color: blue">string </span>id, <span style="color: #2b91af">IDictionary </span>attribs)
+  {
+<strike></strike>
+      <span style="color: #2b91af">Type </span>newType = type;
+
+      <span style="color: blue">if </span>(attribs.Contains(<span style="color: #a31515">"objecttype"</span>))
+      {
+          <span style="color: green">// If objecttype is specified, create a generic type that is bound
+          // to that argument and then hide the objecttype attribute.
+          </span><span style="color: #2b91af">Type </span>genericArg = <span style="color: #2b91af">Type</span>.GetType(
+              (<span style="color: blue">string</span>)attribs[<span style="color: #a31515">"objecttype"</span>], <span style="color: blue">true</span>, <span style="color: blue">true</span>);
+          <span style="color: #2b91af">Type </span>genericType = <span style="color: blue">typeof</span>(<span style="color: #2b91af">AutoGrid</span>&lt;&gt;);
+          newType = genericType.MakeGenericType(genericArg);
+          attribs.Remove(<span style="color: #a31515">"objecttype"</span>);
+      }
+
+      <span style="color: blue">base</span>.Init(parser, parentBuilder, newType, tagName, id, attribs);
+  }
+}</pre><pre class="code"></pre><pre class="code"><span style="font-family: georgia">The other thing that makes this work is an IoC container.  In this case I'm using <a href="http://structuremap.sourceforge.net/" target="_blank">Structure Map</a>, but any IoC would work.  The idea is that since the AutoGrid knows the type it is editing, it can ask for the appropriate data access class.  <a href="http://www.lostechies.com/blogs/chad_myers/" target="_blank">Chad Myers</a> helped me get the configuration right, using a custom TypeScanner:</span></pre><pre class="code"><span style="color: blue">public class </span><span style="color: #2b91af">RepositoryConventionScanner </span>: <span style="color: #2b91af">ITypeScanner
+</span>{
+  <span style="color: blue">public void </span>Process(<span style="color: #2b91af">Type </span>type, <span style="color: #2b91af">Registry </span>registry)
+  {
+      <span style="color: #2b91af">Type </span>repoForType = GetGenericParamFor(type.BaseType, <span style="color: blue">typeof</span>(<span style="color: #2b91af">Repository</span>&lt;&gt;));
+
+      <span style="color: blue">if </span>(repoForType != <span style="color: blue">null</span>)
+      {
+          <span style="color: blue">var </span>genType = <span style="color: blue">typeof</span>(<span style="color: #2b91af">IRepository</span>&lt;&gt;).MakeGenericType(repoForType);
+          registry
+              .ForRequestedType(genType)
+              .AddInstance(<span style="color: blue">new </span><span style="color: #2b91af">ConfiguredInstance</span>(type));
+      }
+  }
+
+  <span style="color: blue">private static </span><span style="color: #2b91af">Type </span>GetGenericParamFor(<span style="color: #2b91af">Type </span>typeToInspect, <span style="color: #2b91af">Type </span>genericType)
+  {
+      <span style="color: blue">if </span>(typeToInspect != <span style="color: blue">null
+          </span>&amp;&amp; typeToInspect.IsGenericType
+          &amp;&amp; typeToInspect.GetGenericTypeDefinition().Equals(genericType))
+      {
+          <span style="color: blue">return </span>typeToInspect.GetGenericArguments()[0];
+      }
+
+      <span style="color: blue">return null</span>;
+  }</pre><pre class="code"></pre><pre class="code"><span style="font-family: georgia">Then in your Application_Start event, just tell Structure Map to run this scanner on your assembly:</span></pre><pre class="code"><span style="color: #2b91af">StructureMapConfiguration
+  </span>.ScanAssemblies()
+  .IncludeAssemblyContainingType&lt;<span style="color: #2b91af">GenericGrid</span>&gt;()
+  .With(<span style="color: blue">new </span><span style="color: #2b91af">RepositoryConventionScanner</span>());</pre><pre class="code"></pre><pre class="code"><span style="font-family: georgia">I wrote this code for a pretty specific situation, your mileage may vary.  I would love to hear thoughts about this, if you care to see the whole solution you can get it <a href="http://www.filefactory.com/file/1fb8fa/n/AutoGridSample_zip" target="_blank">here</a>. </span></pre>  </div>
